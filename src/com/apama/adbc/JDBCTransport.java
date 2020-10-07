@@ -102,7 +102,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					resultPayload.put("messageId", messageId);
 					resultPayload.put("rowId", rowId);
 					Message resultMsg = new Message(resultPayload);
-					resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultEvent");
+					resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultSetRow");
 					msgList.add(resultMsg);
 
 					rowId = rowId + 1;
