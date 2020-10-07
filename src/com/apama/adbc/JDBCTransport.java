@@ -209,13 +209,20 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		stmtActual.close();
 	}
 
-	public void executeQuery(MapExtractor payload, Message m, long messageId) throws Exception{
+	public void executeQuery(MapExtractor payload, Message m, long messageId) throws Exception{ // TODO: this method is too long; refactor into smaller methods
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		String errorPrefix = "Error executing query";
 		List<Message> msgList = new ArrayList<>();
 		long lastEventTime = 0;
 		Integer rowId = 0;
+		
+		Map<String, Object> queryDonePayload = new HashMap<>();
+		queryDonePayload.put("messageId", messageId);
+		//queryDonePayload.put("lastEventTime", lastEventTime); // 
+		Message queryDoneMsg = new Message(queryDonePayload);
+		queryDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.QueryDone");
+
 		
 		try {
 			String queryString = payload.getStringDisallowEmpty("query"); 
@@ -225,7 +232,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 
 			// Execute the query
 			boolean resultsAvailable = true;
-			rs = stmt.executeQuery();
+			rs = stmt.executeQuery(); // TODO: cope with non-query statements that return multiple ResultSet's; also shoudl use try-with-using here
 
 			//AbstractRelationalDatabase.SchemaAttribute[] info = null;
 			ResultSetMetaData rsmd = null;
@@ -258,7 +265,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					for (int i=1; i<=numColumns; i++) { 
 						rsColumnName = rsmd.getColumnName(i);
 						//columnName = info[i-1].getName();
-						columnValue = rs.getString(i);		
+						columnValue = rs.getString(i); // TODO: what about other types?
 						logger.info("ROW: FieldName: " + rsColumnName + " Value: " + columnValue);				
 	
 						if (rsColumnName == null || rsColumnName.length() == 0) {
@@ -269,7 +276,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 						if (columnValue != null) {
 							rowMap.put(rsColumnName,  columnValue);
 						}
-						// Do nothing for NULL values, they are not added to the normalized event
+						// Do nothing for NULL values, they are not added to the payload
 					}
 	
 					//accumulate a batch of events and send back to the host when the batch is full.
@@ -301,7 +308,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			}
 			//Send any remaining resultEvents to the host.
 			if (msgList.size() >0){		
-				lastEventTime = System.currentTimeMillis();	
+				lastEventTime = System.currentTimeMillis();	// TODO: why would this timestamp be useful?
 				// Send the result event(s) to the Host
 				hostSide.sendBatchTowardsHost(msgList);
 			}
@@ -310,14 +317,9 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			}
 
 			//send ack even if no results - QueryDone
-			Map<String, Object> queryDonePayload = new HashMap<>();
-			queryDonePayload.put("messageId", messageId);
 			queryDonePayload.put("errorMessage", "");
 			queryDonePayload.put("eventCount", msgList.size());
 			queryDonePayload.put("lastEventTime", lastEventTime);
-			Message queryDoneMsg = new Message(queryDonePayload);
-			queryDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.QueryDone");
-
 			hostSide.sendBatchTowardsHost(Collections.singletonList(queryDoneMsg));
 
 			
@@ -331,19 +333,13 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			String message = getSQLExceptionMessage(ex, errorPrefix);
 			
 			//Send QueryDone with errormsg
-			Map<String, Object> queryDonePayload = new HashMap<>();
-			queryDonePayload.put("messageId", messageId);
 			queryDonePayload.put("errorMessage", message);
 			queryDonePayload.put("eventCount", msgList.size());
-			queryDonePayload.put("lastEventTime", lastEventTime);
-			Message queryDoneMsg = new Message(queryDonePayload);
-			queryDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.QueryDone");
-
 			hostSide.sendBatchTowardsHost(Collections.singletonList(queryDoneMsg));
 
 			throw new Exception(message);//, db.isDisconnected(con));
 		}
-		catch (Exception excp) {
+		/*catch (Exception excp) { // is there really any other kind of exception we need to catch here?
 			String message = getExceptionMessage(excp, errorPrefix);
 			logger.debug(errorPrefix, excp);
 
@@ -359,7 +355,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			hostSide.sendBatchTowardsHost(Collections.singletonList(queryDoneMsg));
 
 			throw new Exception(message);//, db.isDisconnected(con));
-		}
+		}*/
 		finally {
 			// clean up
 			if (rs != null)	try	{rs.close();} catch(SQLException ex) {}
@@ -477,7 +473,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		return error;
 	}
 
-	public static String getExceptionMessage(Exception ex, String errorPrefix)
+	public static String getExceptionMessage(Exception ex, String errorPrefix) // TODO: is this actually needed? Why not just log the stack trace for unexpected errors?
 	{
 		String error = errorPrefix + "; ";
 		try {

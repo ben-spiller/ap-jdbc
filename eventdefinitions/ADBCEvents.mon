@@ -99,7 +99,7 @@ event QueryDone {
 	/** Total number of events sent. */
 	integer eventCount;
 	/** Timestamp of last event. */
-	float lastEventTime;
+	float lastEventTime; // TODO: why include this? seems to be no reason it's required
 }
 
 /**
