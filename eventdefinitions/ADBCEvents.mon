@@ -12,67 +12,6 @@ package com.apama.adbc;
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Database management events
-//
-////////////////////////////////////////////////////////////////////////////////
-
-/**
-* Request a connection to an existing JDBC Database
-*
-* Response event: DatabaseOperationAck(); errorMessage is blank on success,
-* "Database does not exist.", or otherwise a description of the error.
-*
-* Dataplayer: <br>
-*     - Direction: From client to the correlator.
-*/ 
-event OpenDatabase
-{
-	/** Unique request-response matching number. */
-	integer messageId;	
-	/** The service Id this database is on. */
-	//string serviceId;
-	/** The name of the datbaase to open. */
-	string databaseName;
-	/** The username to the database. */
-	string userName;
-	/** The password to the database. */
-	string password;
-	/** Auto-commit mode: (case insensitive values).
-	*		default - Use setting from yaml file.<br>
-	*		false - Disable auto-commit.<br>
-	*		x.x - Value (seconds) for ADBC adapter timed auto-commit.<br>
-	*		true - Enable data source specific auto-commit.
-	*/
-	string autoCommit;	
-	/** If true, open db connection in read only mode(default is fale). */
-	boolean readOnly; 
-	/** Any additional parameters. */
-	dictionary <string,string> extraParams;
-}
-
-/**
-* The acknowledgement event for OpenDatabase().
-*
-* See also: OpenDatabase()
-*
-* Dataplayer:<br>
-*     - Direction: From correlator to the client.
-*/
-event DatabaseOpenAck
-{
-	/** Unique request-response matching number. */
-	integer messageId;
-	/** The service Id this database is on. */
-	string serviceId;
-	/** Blank on success, otherwise the error message. */
-	string errorMessage;
-	/** The Database connection. */ 
-	integer databaseId;	
-}		
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
 // Query events
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,101 +29,8 @@ event DatabaseOpenAck
 event StartQuery {
 	/** Unique id for this query. */
 	integer messageId;
-	/** The service id, Adapter channel name. */
-	string serviceId;
-	/** Database connection id. */
-	integer databaseId;	
 	/** Query to run (either query string or name). */
 	string query;		
-	/** True if this is a named query.*/
-	//boolean	namedQuery;
-	/** Parameters for a named query. */
-	//dictionary<string,string> namedQueryParameters;
-	/** Return Event Type should be one of: Native, Historical, ResultEvent, ResultEventHetero. */
-	string returnType;	
-	/** Event type (name) for use in mapping rules, needed when using Native returnType. */
-	string eventType;
-	/**
-	* Indicates Query is being used for backtest.
-	*
-	* <pre>
-	* This requires:<br>
-	*	1. Only one can be running per database per plugin. <br>
-	*	2. All queries must be time sorted. <br>
-	*	3. The plugin must be able to identify the time attribute <br>
-	*		for all types and possible tie breaker attribute.</pre>
-	*/
-	boolean backtest;
-	/** Generate a status event every n seconds. If n <= 0.0 no status event is generated. */
-	float statusFrequency;
-	/** Max events to send before waiting for GetNextBatch. */
-	//integer batchSize;
-	/** If true the batch size will count &Time events, if false it will not. */
-	//boolean batchSizeIncludesTimeEvents;
-	/** Speed for back testing: <= 0.0, as fast as possible, > 0.0 -> some multiple of playback speed. */
-	float backtestSpeed;
-	/** Column to use for backtest time attribute, not needed if column name is "time". */
-	string timeColumn;
-	/** Stop the query and send a BatchDone if the event time > runUntilTime. */
-	//float runUntilTime;
-	/** PreparedQuery to run. */
-	integer preparedQueryId;
-	/** Input parameters for preparedQuery. */
-	sequence<string> inputParameters; 
-	/** This is currently a container to allow additional information in the future. */
-	dictionary<string,string> extraParams;
-}
-
-/**
-* Status event in response to the StartQuery event.
-* QueryStatus() contains the status of a currently active query request.
-*
-* See also: StartQuery()
-*
-* Dataplayer: <br>
-*     - Direction: Correlator to client
-*/
-event QueryStatus {
-	/** Unique id for this query. */
-	integer messageId;
-	/** The service id, plugin channel name. */
-	string serviceId;
-	/** Number of events sent so far. */
-	integer eventCount;
-	/** Timestamp of last event sent. */
-	float lastEventTime;
-	/** This is currently a container to allow additional information in the future. */
-	dictionary<string,string> extraParams;
-}
-
-/**
-* Event in response to the StartQuery event to indicate the result's schema.
-*
-* Note: This event will be sent before the first ResultEvent and only if 
-* ReturnType is set to ResultEvent.
-*
-* See also: StartQuery()
-*
-* Dataplayer: <br>
-*     - Direction: Correlator to client
-*
-*     Channel: <verbatim><</verbatim>serviceId<verbatim>></verbatim>.Control
-*/
-event ResultSchema {
-	/** Unique id for this query. */
-	integer messageId;
-	/** The service id, Adapter channel name. */
-	//string serviceId;
-	/** The id of the schema. */
-	//integer schemaId; 
-	/** The order of the fields in the schema. */
-	sequence <string> fieldOrder;
-	/** The types of the fields in the schema. */
-	dictionary <string, string> fieldTypes;
-	/** The index field(s) of this schema. */
-	//sequence <string> indexFields;//Doesnt make sense in the current implementation is set based on rsmd.isSearchable which check its it can be used in a where clause!
-	/** This is currently a container to allow additional information in the future. */
-	//dictionary<string,string> extraParams;
 }
 
 /**
@@ -203,10 +49,11 @@ event ResultSchema {
 event ResultEvent {
 	/** Unique id for this query. */
 	integer messageId;
-	/** The service id, Adapter channel name. */
-	//string serviceId;
-	/** The id of the schema. */
-	//integer schemaId;
+	/** unique Id for each row
+	* This is useful if you ned to rerun a query and dont 
+	* expect the underlying data to change.
+	*/
+	integer rowId;
 	/** The result data. */
 	dictionary <string, any> row;
 }
@@ -225,16 +72,12 @@ event ResultEvent {
 event QueryDone {
 	/** Unique id for this query. */
 	integer messageId;
-	/** The service id. */
-	//string serviceId;
 	/** Blank on success, otherwise the error message. */
 	string errorMessage;
 	/** Total number of events sent. */
 	integer eventCount;
 	/** Timestamp of last event. */
 	float lastEventTime;
-	/** This is currently a container to allow additional information in the future. */
-	//dictionary<string,string> extraParams;
 }
 
 

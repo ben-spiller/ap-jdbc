@@ -17,6 +17,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	String jdbcURL;
 	Connection jdbcConn;
 	ApamaThread autoCommitThread;
+	Integer batchSize = 500;
 
 	public JDBCTransport(org.slf4j.Logger logger, TransportConstructorParameters params) throws Exception 
 	{
@@ -130,6 +131,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		String errorPrefix = "Error executing query";
 		List<Message> msgList = new ArrayList<>();
 		long lastEventTime = 0;
+		Integer rowId = 0;
 		
 		try {
 			String queryString = payload.getStringDisallowEmpty("query"); 
@@ -186,15 +188,23 @@ public class JDBCTransport extends AbstractSimpleTransport {
 						// Do nothing for NULL values, they are not added to the normalized event
 					}
 	
-					//Dont send back to host for each result
-					//Only send to the host after ALL results have been received - Could cause memory issues for large result sets
+					//accumulate a batch of events and send back to the host when the batch is full.
 					if (rowMap.size() > 0){
 						Map<String, Object> resultPayload = new HashMap<>();
 						resultPayload.put("row", rowMap);
 						resultPayload.put("messageId", messageId);
+						rowId = rowId + 1;
+						//logger.info("For query id " + messageId + " Send row Id " + rowId);
+						resultPayload.put("rowId", rowId);
 						Message resultMsg = new Message(resultPayload);
 						resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultEvent");
 						msgList.add(resultMsg);
+						if (msgList.size() >= batchSize){
+							lastEventTime = System.currentTimeMillis();	
+							// Send the result event(s) to the Host
+							hostSide.sendBatchTowardsHost(msgList);
+							msgList.clear();
+						}
 					}
 				}
 								
@@ -205,7 +215,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					schemaId++;
 				}
 			}
-			//Only send to the host after ALL results have been received - Could cause memory issues for large result sets
+			//Send any remaining resultEvents to the host.
 			if (msgList.size() >0){		
 				lastEventTime = System.currentTimeMillis();	
 				// Send the result event(s) to the Host
