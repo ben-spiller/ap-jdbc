@@ -124,7 +124,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		List<Message> msgList = new ArrayList<>();
 		
 		try {
-			String sql_string = payload.getStringDisallowEmpty("query"); 
+			String sql_string = payload.getStringDisallowEmpty("sql"); 
 			logger.info("STATEMENT: " + sql_string);
 			PreparedStatement stmt = jdbcConn.prepareStatement(sql_string);
 
@@ -143,7 +143,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				while (rs.next()) {
 					Map <String, Object> rowMap = new HashMap<>();
 					// For each column
-					for(int i = 0; i <= rsmd.getColumnCount(); i++) {
+					for(int i = 1; i <= rsmd.getColumnCount(); i++) {
 						rowMap.put(rsmd.getColumnName(i), rs.getObject(i));
 					}
 					Map<String, Object> resultPayload = new HashMap<>();
@@ -157,9 +157,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					rowId = rowId + 1;
 				}
 
-				if(stmt.getMoreResults()) {
-					rs = stmt.getResultSet();
-				}
+				rs = stmt.getMoreResults() ? stmt.getResultSet() : null;
 			}
 			if (msgList.size() >0) {
 				hostSide.sendBatchTowardsHost(msgList);
