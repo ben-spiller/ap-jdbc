@@ -10,7 +10,7 @@ plugins:
         class: DiagnosticCodec
 
 startChains:
-    sqliteDB:
+    JDBC:
         - apama.eventMap:
             allowMissing: true
 #        - mapperCodec:
