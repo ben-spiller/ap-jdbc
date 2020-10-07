@@ -24,11 +24,18 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		super(logger, params);
 		MapExtractor config = new MapExtractor(params.getConfig(), "config");
 		jdbcURL = config.getStringDisallowEmpty("jdbcURL");
+
+
+		// e.g. "org.sqlite.JDBC" Only needed for legacy older drivers. "Any JDBC 4.0 drivers that are found in your class path are automatically loaded"
+		String driverClass = config.getStringDisallowEmpty("driverClass", null);
+		if (driverClass != null)
+			Class.forName(driverClass);
+			
+
 		config.checkNoItemsRemaining();
 	}
 
 	public void start() throws Exception {
-		Class.forName("org.sqlite.JDBC");
 		jdbcConn = DriverManager.getConnection(jdbcURL);
 		jdbcConn.setAutoCommit(false);
 

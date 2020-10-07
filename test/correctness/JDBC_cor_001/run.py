@@ -19,5 +19,5 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 	def validate(self):
 		# look for log statements in the correlator log file
 		#self.assertGrep('correlator.log', expr=' (ERROR|FATAL) .*', contains=False)
-		self.assertGrep('correlator.log', expr=' ERROR .*ClassNotFoundException: org.sqlite.JDBC')
+		self.assertGrep('correlator.log', expr=' ERROR .*SQLException: No suitable driver')
 		self.assertGrep('correlator.log', expr='NullPointerException', contains=False)
