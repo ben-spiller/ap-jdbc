@@ -116,9 +116,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	}
 
 	public void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
-		String errorPrefix = "Error executing query";
 		List<Message> msgList = new ArrayList<>();
-		
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
 			PreparedStatement stmt = jdbcConn.prepareStatement(sql_string);
@@ -167,7 +165,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 		} catch (SQLException ex) {
 			/**
-			String message = getSQLExceptionMessage(ex, errorPrefix);
+			String message = getSQLExceptionMessage(ex, "Error executing query");
 			
 			//Send QueryDone with errormsg
 			Map<String, Object> queryDonePayload = new HashMap<>();
