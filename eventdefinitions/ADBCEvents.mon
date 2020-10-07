@@ -59,6 +59,28 @@ event ResultEvent {
 }
 
 /**
+* Event in response to the StartQuery event to indicate the result's schema.
+*
+* Note: This event will be sent before the first ResultEvent and only if 
+* ReturnType is set to ResultEvent.
+*
+* See also: StartQuery()
+*
+* Dataplayer: <br>
+*     - Direction: Correlator to client
+*
+*     Channel: <verbatim><</verbatim>serviceId<verbatim>></verbatim>.Control
+*/
+event ResultSchema {
+	/** Unique id for this query. */
+	integer messageId;
+	/** The order of the fields in the schema. */
+	sequence <string> fieldOrder;
+	/** The types of the fields in the schema. */
+	dictionary <string, string> fieldTypes;
+}
+
+/**
 * Query is done.  errorMessage is NULL if the query has succeeded, not NULL if an
 * error has occurred.
 * 
