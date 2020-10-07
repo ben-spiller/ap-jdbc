@@ -164,7 +164,7 @@ event ResultSetRow {
 	dictionary <string, any> row;
 }
 
-/** Response to Statement
+/** Response to Statement */
 event StatementDone {
 	/** Unique id identifying the Statement that this is in response to */
 	integer messageId;
