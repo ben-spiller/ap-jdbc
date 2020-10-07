@@ -1,0 +1,21 @@
+using com.apama.adbc.Statement;
+using com.apama.adbc.ResultSetRow;
+using com.apama.adbc.StatementDone;
+
+monitor Test {
+	action onload() {
+		send Statement(1, "CREATE TABLE myTable(myColumn int);") to "JDBC";
+		send Statement(2, "INSERT INTO myTable VALUES(42);") to "JDBC";
+		send Statement(3, "INSERT INTO myTable VALUES(100);") to "JDBC";
+		send Statement(4, "INSERT INTO myTable VALUES(-1);") to "JDBC";
+		send Statement(5, "SELECT * FROM myTable WHERE myColumn > 0;") to "JDBC";
+
+		on all ResultSetRow(messageId=5) as row {
+			log row.toString() at INFO;
+		}
+
+		on all StatementDone() as sd {
+			log sd.toString();
+		}
+	}
+}
