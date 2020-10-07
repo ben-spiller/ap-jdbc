@@ -65,6 +65,93 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			executeCommand(messageId, payload);
 		} else if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
+		} else if (eventType.equals("Statement")) {
+			executeStatement(payload, m, messageId);
+		}
+	}
+
+	public void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
+		String errorPrefix = "Error executing query";
+		List<Message> msgList = new ArrayList<>();
+		
+		try {
+			String sql_string = payload.getStringDisallowEmpty("query"); 
+			logger.info("STATEMENT: " + sql_string);
+			PreparedStatement stmt = jdbcConn.prepareStatement(sql_string);
+
+			boolean resultsAvailable = stmt.execute();
+			ResultSet rs = null;
+
+			if(resultsAvailable) {
+				rs = stmt.getResultSet();
+			}
+
+			int rowId = 0;
+			// For each ResultSet
+			while (rs != null) {
+				// For each row
+				ResultSetMetaData rsmd = rs.getMetaData();
+				while (rs.next()) {
+					Map <String, Object> rowMap = new HashMap<>();
+					// For each column
+					for(int i = 0; i <= rsmd.getColumnCount(); i++) {
+						rowMap.put(rsmd.getColumnName(i), rs.getObject(i));
+					}
+					Map<String, Object> resultPayload = new HashMap<>();
+					resultPayload.put("row", rowMap);
+					resultPayload.put("messageId", messageId);
+					resultPayload.put("rowId", rowId);
+					Message resultMsg = new Message(resultPayload);
+					resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultEvent");
+					msgList.add(resultMsg);
+
+					rowId = rowId + 1;
+				}
+
+				if(stmt.getMoreResults()) {
+					rs = stmt.getResultSet();
+				}
+			}
+			if (msgList.size() >0) {
+				hostSide.sendBatchTowardsHost(msgList);
+			}
+
+			// Respond with StatementDone
+			/**
+			Map<String, Object> statementDonePayload = new HashMap<>();
+			statementDonePayload.put("messageId", messageId);
+			statementDonePayload.put("error", "");
+			statementDonePayload.put("updateCount", stmt.getUpdateCount());
+			Message statementDoneMsg = new Message(statementDonePayload);
+			statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.StatementDone");
+			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
+			*/
+		} catch (SQLException ex) {
+			/**
+			String message = getSQLExceptionMessage(ex, errorPrefix);
+			
+			//Send QueryDone with errormsg
+			Map<String, Object> queryDonePayload = new HashMap<>();
+			queryDonePayload.put("messageId", messageId);
+			queryDonePayload.put("errorMessage", message);
+			queryDonePayload.put("eventCount", msgList.size());
+			queryDonePayload.put("lastEventTime", lastEventTime);
+			Message queryDoneMsg = new Message(queryDonePayload);
+			queryDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.QueryDone");
+
+			hostSide.sendBatchTowardsHost(Collections.singletonList(queryDoneMsg));
+
+			throw new Exception(message);//, db.isDisconnected(con));
+			*/
+		}
+		finally {
+			/**
+			// clean up
+			if (rs != null)	try	{rs.close();} catch(SQLException ex) {}
+			if (stmt != null) try {stmt.close();} catch(SQLException ex) {}
+			stmt = null;
+			rs = null;
+			*/
 		}
 	}
 
