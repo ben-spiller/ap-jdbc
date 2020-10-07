@@ -117,15 +117,12 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			}
 
 			// Respond with StatementDone
-			/**
 			Map<String, Object> statementDonePayload = new HashMap<>();
 			statementDonePayload.put("messageId", messageId);
-			statementDonePayload.put("error", "");
 			statementDonePayload.put("updateCount", stmt.getUpdateCount());
 			Message statementDoneMsg = new Message(statementDonePayload);
 			statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.StatementDone");
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
-			*/
 		} catch (SQLException ex) {
 			/**
 			String message = getSQLExceptionMessage(ex, errorPrefix);
