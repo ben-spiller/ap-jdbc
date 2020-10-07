@@ -1,6 +1,7 @@
 package com.apama.adbc;
 
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Collections;
 import com.softwareag.connectivity.AbstractSimpleTransport;
@@ -9,51 +10,92 @@ import com.softwareag.connectivity.PluginConstructorParameters.TransportConstruc
 import com.softwareag.connectivity.util.MapExtractor;
 import java.sql.*;
 import java.util.Map;
+
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
+
 import java.util.ArrayList;
 import java.lang.Thread;
 import com.apama.util.concurrent.ApamaThread;
 
 public class JDBCTransport extends AbstractSimpleTransport {
-	String jdbcURL;
+	InitialContext jndi;
 	Connection jdbcConn;
-	ApamaThread autoCommitThread;
-	Integer batchSize = 500;
+	ApamaThread periodicCommitThread;
 
+	final int batchSize = 500;
+	final String jdbcURL;
+	final String jndiName;
+
+	final String username;
+	final String password;
+	final Hashtable<?,?> jndiEnvironment;
+	
+	
+	/** How often to automatically commit the connection. Set to 0 to disable. 
+	 * This is usually more performant than the "autoCommit" JDBC feature which does it after every statement. */
+	final float periodicCommitIntervalSecs; 
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public JDBCTransport(org.slf4j.Logger logger, TransportConstructorParameters params) throws Exception 
 	{
 		super(logger, params);
 		MapExtractor config = new MapExtractor(params.getConfig(), "config");
-		jdbcURL = config.getStringDisallowEmpty("jdbcURL");
 
 
 		// e.g. "org.sqlite.JDBC" Only needed for legacy older drivers. "Any JDBC 4.0 drivers that are found in your class path are automatically loaded"
 		String driverClass = config.getStringDisallowEmpty("driverClass", null);
 		if (driverClass != null)
 			Class.forName(driverClass);
-			
+
+		jndiName = config.getStringDisallowEmpty("driverClass", null);
+		jdbcURL = config.getStringDisallowEmpty("jdbcURL");
+		if (!(jndiName == null ^ jdbcURL == null)) throw new IllegalArgumentException("Must set one of: jndiName, jdbcURL");
+
+		username = config.getStringDisallowEmpty("username", null);
+		password = config.getStringDisallowEmpty("password", "");
+
+		periodicCommitIntervalSecs = config.get("periodicCommitIntervalSecs", 5.0f);
+		
+		jndiEnvironment = new Hashtable(config.getMap("jndiEnvironment", true).getUnderlyingMap());
 
 		config.checkNoItemsRemaining();
 	}
 
+	private Connection createConnection() throws Exception
+	{
+		// TODO: automatic retry connection establishment (unless shutting down)
+		
+		if (jdbcURL != null) return DriverManager.getConnection(jdbcURL);
+		
+		// Preferred/modern approach is to get a DataSource instance from JNDI, which allows for connection pooling
+		
+		// TODO: check if we need to set thread context classloader (see Kafka plugin and also itrac, can't remember if we do this automatically or not)
+		if (jndi == null)
+			jndi = new InitialContext(jndiEnvironment);
+		DataSource ds = (DataSource)jndi.lookup(jndiName);
+		if (username != null) return ds.getConnection(username, password);
+		return ds.getConnection();
+	}
+	
 	public void start() throws Exception {
-		jdbcConn = DriverManager.getConnection(jdbcURL);
+		jdbcConn = createConnection();
 		jdbcConn.setAutoCommit(false);
 
-		autoCommitThread = new ApamaThread("JDBCTransport.autoCommitThread") {
-			@Override
-			public void call() {
-				try {
+		if (periodicCommitIntervalSecs >= 0)
+			periodicCommitThread = new ApamaThread("JDBCTransport.periodicCommitThread") {
+				@Override
+				public void call() throws InterruptedException {
 					while(true) {
-						Thread.sleep(5000);
+						Thread.sleep((int)(periodicCommitIntervalSecs*1000));
 						try {
 							jdbcConn.commit();
-						} catch (SQLException s) {
+						} catch (SQLException ex) { // TODO: think about error handling here
+							logger.error("Failed to commit: ", ex);
 						}
 					}
-				} catch (java.lang.InterruptedException e) {
 				}
-			}
-		}.startThread();
+			}.startThread();
 
 	}
 
@@ -508,12 +550,36 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		return error;
 	}
 
-
-	public void shutdown() throws SQLException {
-		if (autoCommitThread != null) autoCommitThread.interrupt();
-		if (jdbcConn != null) {
-			jdbcConn.commit();
-			jdbcConn.close();
+	/** Helper method that executes the specified lambda expression and logs a warning if it throws an exception. 
+	 * 
+	 * @param lambda e.g. <code>() -> foo.bar()</code>
+	 * @param logMessagePrefix e.g. "Could not do thingummy: ".
+	 */
+	boolean tryElseWarn(CanThrow lambda, String logMessagePrefix)
+	{
+		try
+		{
+			lambda.run();
+			return true;
+		} catch (Exception e)
+		{
+			logger.warn(logMessagePrefix, e);
+			return false;
 		}
+	}
+	@FunctionalInterface
+	public interface CanThrow { void run() throws Exception; }
+	
+	public void shutdown() 
+	{
+		if (periodicCommitThread != null) 
+			ApamaThread.cancelAndJoin(5000, true,  periodicCommitThread);
+		
+		if (jdbcConn != null) {
+			tryElseWarn(() -> jdbcConn.commit(), "Could not perform a final commit on the JDBC connection: ");
+			tryElseWarn(() -> jdbcConn.close(), "Could not close the JDBC connection: ");
+		}
+		if (jndi != null) 
+			tryElseWarn(() -> jndi.close(), "Could not close JNDI context: ");
 	}
 }
