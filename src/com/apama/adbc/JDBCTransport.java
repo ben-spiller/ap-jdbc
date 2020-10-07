@@ -567,7 +567,6 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			return false;
 		}
 	}
-	@FunctionalInterface
 	public interface CanThrow { void run() throws Exception; }
 	
 	public void shutdown() 
