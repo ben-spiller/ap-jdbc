@@ -119,9 +119,27 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		List<Message> msgList = new ArrayList<>();
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
-			PreparedStatement stmt = jdbcConn.prepareStatement(sql_string);
+			List<Object> parameters = payload.getList("parameters", Object.class, false);
+			Statement stmt = null;
+			boolean resultsAvailable;
 
-			boolean resultsAvailable = stmt.execute();
+			if(parameters.isEmpty()) {
+				logger.info("Normal statement");
+				stmt = jdbcConn.createStatement();
+				resultsAvailable = stmt.execute(sql_string);
+			} else {
+				logger.info("Prepared statement");
+				PreparedStatement stmt_ = jdbcConn.prepareStatement(sql_string);
+				int i = 1;
+				for(Object param : parameters) {
+					stmt_.setObject(i, param);
+					i++;
+				}
+				resultsAvailable = stmt_.execute();
+
+				stmt = stmt_;
+			}
+
 			ResultSet rs = null;
 
 			if(resultsAvailable) {
