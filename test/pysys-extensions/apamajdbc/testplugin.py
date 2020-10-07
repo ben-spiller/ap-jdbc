@@ -34,6 +34,7 @@ class ApamaJDBCPlugin(object):
 		c = apama.correlator.CorrelatorHelper(self.owner, name=name)
 		c.addToClassPath(f'{self.project.testRootDir}/../lib/sqlite-jdbc-3.8.11.2.jar')
 		c.start(logfile=name+'.log', java=True, **kwargs)
+		c.injectEPL([self.project.eventDefDir+'/ADBCEvents.mon'])
 		return c
 	
 class ApamaJDBCBaseTest(apama.basetest.ApamaBaseTest):
