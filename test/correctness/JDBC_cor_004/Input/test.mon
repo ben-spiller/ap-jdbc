@@ -20,7 +20,7 @@ monitor Test {
 		send stmt to "JDBC";
 
 		stmt.messageId := 4;
-		stmt.sql := "SELECT * FROM myTable WHERE myColumn > 0;";
+		stmt.sql := "SELECT * FROM myTable;";
 		stmt.parameters := [];
 		send stmt to "JDBC";
 

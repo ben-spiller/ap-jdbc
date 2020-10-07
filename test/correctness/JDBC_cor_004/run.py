@@ -14,10 +14,11 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 		
 		correlator.injectEPL("test.mon")
 		correlator.flush()
-		self.waitForGrep('correlator.log', 'com.apama.adbc.ResultSetRow\(', condition='==1')
+		self.waitForGrep('correlator.log', 'com.apama.adbc.ResultSetRow\(', condition='==2')
 		
 	def validate(self):
 		self.assertGrep('correlator.log', expr=' (ERROR|FATAL) .*', contains=False)
 
-		self.assertLineCount('correlator.log', expr='ResultSetRow\(', condition='==1')
+		self.assertLineCount('correlator.log', expr='ResultSetRow\(', condition='==2')
 		self.assertGrep('correlator.log', expr='ResultSetRow\(4,0,.*42\)')
+		self.assertGrep('correlator.log', expr='ResultSetRow\(4,1,.*-2\)')
