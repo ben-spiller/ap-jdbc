@@ -10,54 +10,6 @@ package com.apama.adbc;
 //
 //*****************************************************************************
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// Query events
-//
-////////////////////////////////////////////////////////////////////////////////
-
-/**
-* Sent to plugin to start a database query.
-*
-* See also: QueryStatus(), ResultSchema(), ResultEvent()
-*
-* Response: QueryStatus(), ResultSchema(), ResultEvent()
-*
-* Dataplayer: <br>
-*     - Direction: Client to correlator.
-*/
-event StartQuery {
-	/** Unique id for this query. */
-	integer messageId;
-	/** Query to run (either query string or name). */
-	string query;		
-}
-
-/**
-* Response to the StartQuery
-*
-* These will be sent in order until the number requested, in the rowLimit
-* specified, in the StartQuery has been sent.
-*
-* All results will be streamed at once.
-*
-* See also: StartQuery()
-*
-* Dataplayer: <br>
-*     - Direction: Correlator to client
-*/
-event ResultEvent {
-	/** Unique id for this query. */
-	integer messageId;
-	/** unique Id for each row
-	* This is useful if you ned to rerun a query and dont 
-	* expect the underlying data to change.
-	*/
-	integer rowId;
-	/** The result data. */
-	dictionary <string, any> row;
-}
-
 /**
 * Event in response to the StartQuery event to indicate the result's schema.
 *
@@ -79,53 +31,6 @@ event ResultSchema {
 	/** The types of the fields in the schema. */
 	dictionary <string, string> fieldTypes;
 }
-
-/**
-* Query is done.  errorMessage is NULL if the query has succeeded, not NULL if an
-* error has occurred.
-* 
-* See also: StartQuery()
-*
-* Dataplayer: <br>
-*     - Direction: Correlator to client
-*
-*     Channel: <verbatim><</verbatim>serviceId<verbatim>></verbatim>.Control
-*/
-event QueryDone {
-	/** Unique id for this query. */
-	integer messageId;
-	/** Blank on success, otherwise the error message. */
-	string errorMessage;
-	/** Total number of events sent. */
-	integer eventCount;
-	/** Timestamp of last event. */
-	float lastEventTime; // TODO: why include this? seems to be no reason it's required
-}
-
-/**
-* Sent to plugin to perform maintenance operations such as update or delete.
-*
-* Response event: CommandAck; errorMessage is blank on success, or
-* otherwise a description of the error
-*/
-event Command {
-	/** Unique request-response matching number. */
-	integer messageId;
-	/** Command string (Update, delete, etc.). */
-	string operationString;
-}
-
-/**
-* The acknowledgement event for Command.
-*/
-event CommandAck
-{
-	/** Unique request-response matching number. */
-	integer messageId;
-	/** Populated with an errorMessage if there is one. */
-	string errorMessage;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
