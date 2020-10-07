@@ -9,7 +9,7 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 
 	def execute(self):
 		correlator = self.apamajdbc.startCorrelator('correlator', config=self.project.samplesDir+'/default_config.yaml', 
-			configPropertyOverrides=self.apamajdbc.getProperties(), 
+			configPropertyOverrides={"jdbc.url":"localhost:000/invalidURL"},
 			# Because we're expecting a correlator startup failure:
 			expectedExitStatus='!=0', waitForServerUp=False, state=FOREGROUND, timeout=60)
 		

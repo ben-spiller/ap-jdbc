@@ -10,7 +10,7 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 	def execute(self):
 		correlator = self.apamajdbc.startCorrelator('correlator',
 			config=f'{self.project.samplesDir}/default_config.yaml',
-			configPropertyOverrides={"jdbc.connectivityPluginDir":self.project.appHome, "jdbc.url":"jdbc:sqlite:test.db"})
+			configPropertyOverrides={"jdbc.url":"jdbc:sqlite:test.db"})
 		
 		correlator.flush()
 		#self.waitForGrep('correlator.log', expr="Loaded simple test monitor", 

@@ -16,15 +16,6 @@ class ApamaJDBCPlugin(object):
 		self.project = self.owner.project
 		self.log = logging.getLogger('pysys.ApamaJDBCPlugin')
 
-	def getProperties(self):
-		"""
-		Get the -D properties dict that should be passed to the correlator to make use of this plugin. 
-		"""
-		return {
-			'jdbc.connectivityPluginDir': self.project.appHome,
-			'jdbc.url': 'localhost:000/invalidURL',
-			}
-		
 	def startCorrelator(self, name, **kwargs):
 		"""
 		A wrapper around calling the CorrelatorHelper constructor and start method that sets Java and the correct classpath for JDBC
@@ -33,8 +24,11 @@ class ApamaJDBCPlugin(object):
 		"""
 		c = apama.correlator.CorrelatorHelper(self.owner, name=name)
 		c.addToClassPath(f'{self.project.testRootDir}/../lib/sqlite-jdbc-3.8.11.2.jar')
+		kwargs.setdefault("configPropertyOverrides", {})
+		kwargs["configPropertyOverrides"]["jdbc.connectivityPluginDir"] = self.project.appHome
 		c.start(logfile=name+'.log', java=True, **kwargs)
-		c.injectEPL([self.project.eventDefDir+'/ADBCEvents.mon'])
+		if(kwargs.get("waitForServerUp", True)):
+			c.injectEPL([self.project.eventDefDir+'/ADBCEvents.mon'])
 		return c
 	
 class ApamaJDBCBaseTest(apama.basetest.ApamaBaseTest):
