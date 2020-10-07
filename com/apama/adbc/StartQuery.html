@@ -60,64 +60,9 @@
 <br>Unique id for this query.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#serviceId">serviceId</A></B></CODE>
-<br>
-<br>The service id, Adapter channel name.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#databaseId">databaseId</A></B></CODE>
-<br>
-<br>Database connection id.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#query">query</A></B></CODE>
 <br>
 <br>Query to run (either query string or name).</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#returnType">returnType</A></B></CODE>
-<br>
-<br>Return Event Type should be one of: Native, Historical, ResultEvent, ResultEventHetero.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#eventType">eventType</A></B></CODE>
-<br>
-<br>Event type (name) for use in mapping rules, needed when using Native returnType.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;boolean</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#backtest">backtest</A></B></CODE>
-<br>
-<br>Indicates Query is being used for backtest.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;float</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#statusFrequency">statusFrequency</A></B></CODE>
-<br>
-<br>Generate a status event every n seconds. If n <= 0.0 no status event is generated.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;float</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#backtestSpeed">backtestSpeed</A></B></CODE>
-<br>
-<br>Speed for back testing: <= 0.0, as fast as possible, > 0.0 -> some multiple of playback speed.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#timeColumn">timeColumn</A></B></CODE>
-<br>
-<br>Column to use for backtest time attribute, not needed if column name is "time".</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#preparedQueryId">preparedQueryId</A></B></CODE>
-<br>
-<br>PreparedQuery to run.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;string&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#inputParameters">inputParameters</A></B></CODE>
-<br>
-<br>Input parameters for preparedQuery.</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;dictionary&lt;string,&nbsp;string&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="StartQuery.html#extraParams">extraParams</A></B></CODE>
-<br>
-<br>This is currently a container to allow additional information in the future.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -125,59 +70,14 @@
 <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Member detail</B></FONT></TH>
 </TR>
 </TABLE>
-<A NAME="backtest"></A>
-<H3>backtest</H3>
-<PRE>boolean&nbsp;<B>backtest</B>
-</PRE>Indicates Query is being used for backtest.<br>
-<br> <pre> This requires:<br> 1. Only one can be running per database per plugin. <br> 2. All queries must be time sorted. <br> 3. The plugin must be able to identify the time attribute <br> for all types and possible tie breaker attribute.</pre><HR>
-<A NAME="backtestSpeed"></A>
-<H3>backtestSpeed</H3>
-<PRE>float&nbsp;<B>backtestSpeed</B>
-</PRE>Speed for back testing: <= 0.0, as fast as possible, > 0.0 -> some multiple of playback speed.<HR>
-<A NAME="databaseId"></A>
-<H3>databaseId</H3>
-<PRE>integer&nbsp;<B>databaseId</B>
-</PRE>Database connection id.<HR>
-<A NAME="eventType"></A>
-<H3>eventType</H3>
-<PRE>string&nbsp;<B>eventType</B>
-</PRE>Event type (name) for use in mapping rules, needed when using Native returnType.<HR>
-<A NAME="extraParams"></A>
-<H3>extraParams</H3>
-<PRE>dictionary&lt;string,&nbsp;string&gt;&nbsp;<B>extraParams</B>
-</PRE>This is currently a container to allow additional information in the future.<HR>
-<A NAME="inputParameters"></A>
-<H3>inputParameters</H3>
-<PRE>sequence&lt;string&gt;&nbsp;<B>inputParameters</B>
-</PRE>Input parameters for preparedQuery.<HR>
 <A NAME="messageId"></A>
 <H3>messageId</H3>
 <PRE>integer&nbsp;<B>messageId</B>
 </PRE>Unique id for this query.<HR>
-<A NAME="preparedQueryId"></A>
-<H3>preparedQueryId</H3>
-<PRE>integer&nbsp;<B>preparedQueryId</B>
-</PRE>PreparedQuery to run.<HR>
 <A NAME="query"></A>
 <H3>query</H3>
 <PRE>string&nbsp;<B>query</B>
 </PRE>Query to run (either query string or name).<HR>
-<A NAME="returnType"></A>
-<H3>returnType</H3>
-<PRE>string&nbsp;<B>returnType</B>
-</PRE>Return Event Type should be one of: Native, Historical, ResultEvent, ResultEventHetero.<HR>
-<A NAME="serviceId"></A>
-<H3>serviceId</H3>
-<PRE>string&nbsp;<B>serviceId</B>
-</PRE>The service id, Adapter channel name.<HR>
-<A NAME="statusFrequency"></A>
-<H3>statusFrequency</H3>
-<PRE>float&nbsp;<B>statusFrequency</B>
-</PRE>Generate a status event every n seconds. If n <= 0.0 no status event is generated.<HR>
-<A NAME="timeColumn"></A>
-<H3>timeColumn</H3>
-<PRE>string&nbsp;<B>timeColumn</B>
-</PRE>Column to use for backtest time attribute, not needed if column name is "time".<HR>
 <HR>
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
