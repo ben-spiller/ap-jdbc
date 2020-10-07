@@ -124,11 +124,9 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			boolean resultsAvailable;
 
 			if(parameters.isEmpty()) {
-				logger.info("Normal statement");
 				stmt = jdbcConn.createStatement();
 				resultsAvailable = stmt.execute(sql_string);
 			} else {
-				logger.info("Prepared statement");
 				PreparedStatement stmt_ = jdbcConn.prepareStatement(sql_string);
 				int i = 1;
 				for(Object param : parameters) {
