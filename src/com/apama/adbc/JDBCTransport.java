@@ -127,7 +127,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				stmt = jdbcConn.createStatement();
 				resultsAvailable = stmt.execute(sql_string);
 			} else {
-				PreparedStatement stmt_ = jdbcConn.prepareStatement(sql_string);
+				PreparedStatement stmt_ = getPreparedStatement(sql_string);
 				int i = 1;
 				for(Object param : parameters) {
 					stmt_.setObject(i, param);
@@ -421,4 +421,20 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		if (jndi != null) 
 			tryElseWarn(() -> jndi.close(), "Could not close JNDI context: ");
 	}
+
+	/**
+	 * Creates a PreparedStatement on the current connection with the given SQL. Attempts to re-use previous PreparedStatements for the
+	 * same SQL to save compilation expense.
+	 */
+	private PreparedStatement getPreparedStatement(String sql) throws SQLException {
+		PreparedStatement ret = previousPreparedStatements.get(sql);
+		if(ret == null) {
+			ret = jdbcConn.prepareStatement(sql);
+			previousPreparedStatements.put(sql, ret);
+		}
+		return ret;
+	}
+
+	/** SQL string to statement map, supports getPreparedStatement's caching */
+	private Map<String, PreparedStatement> previousPreparedStatements = new HashMap<String, PreparedStatement>();
 }
