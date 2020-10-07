@@ -80,28 +80,6 @@ event QueryDone {
 	float lastEventTime;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Store events
-//
-////////////////////////////////////////////////////////////////////////////////
-
-/** A specialised simpler kind of command that just populates a new row with values */
-event Store {
-	integer messageId;
-	string tableName;
-	dictionary<string, any> row;
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Database command events
-//
-////////////////////////////////////////////////////////////////////////////////
-
 /**
 * Sent to plugin to perform maintenance operations such as update or delete.
 *
@@ -126,3 +104,52 @@ event CommandAck
 	string errorMessage;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Store events
+//
+////////////////////////////////////////////////////////////////////////////////
+
+/** A specialised simpler kind of command that just populates a new row with values */
+event Store {
+	integer messageId;
+	string tableName;
+	dictionary<string, any> row;
+}
+
+
+/** Execute an SQL statement */
+event Statement {
+	/** Unique id identifying this Statement */
+	integer messageId;
+	/** SQL to run */
+	string sql;
+
+	// TODO - parameters for prepared statement
+}
+
+/** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
+event ResultSetRow {
+	/** Unique id identifying the Statement that this is in response to */
+	integer messageId;
+	/** unique Id for each row
+	* This is useful if you ned to rerun a query and dont 
+	* expect the underlying data to change.
+	*/
+	integer rowId;
+	/** The result data. */
+	dictionary <string, any> row;
+}
+
+/** Response to Statement
+event StatementDone {
+	/** Unique id identifying the Statement that this is in response to */
+	integer messageId;
+
+	/** Number of rows updated by the Statement */
+	integer updateCount;
+
+	// TODO - more sophisticated error reporting
+	optional<string> error;
+}
