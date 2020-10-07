@@ -18,8 +18,7 @@ class ApamaJDBCPlugin(object):
 
 	def startCorrelator(self, name, **kwargs):
 		"""
-		A wrapper around calling the CorrelatorHelper constructor and start method that sets Java and the correct classpath for JDBC
-		testing.
+		A wrapper for setting up a CorrelatorHelper suitable of JDBC testing; sets Java, the classpath, injects necessary EPL.
 		TODO: maybe remove this in Apama 10.7 when the standard apama test plugin has the same functionality. 
 		"""
 		c = apama.correlator.CorrelatorHelper(self.owner, name=name)
@@ -28,7 +27,12 @@ class ApamaJDBCPlugin(object):
 		kwargs["configPropertyOverrides"]["jdbc.connectivityPluginDir"] = self.project.appHome
 		c.start(logfile=name+'.log', java=True, **kwargs)
 		if(kwargs.get("waitForServerUp", True)):
-			c.injectEPL([self.project.eventDefDir+'/ADBCEvents.mon'])
+			c.injectEPL([
+				self.project.APAMA_HOME + '/monitors/ConnectivityPluginsControl.mon',
+				self.project.APAMA_HOME + '/monitors/ConnectivityPlugins.mon',
+				self.project.APAMA_HOME + '/monitors/AutomaticOnApplicationInitialized.mon',
+				self.project.eventDefDir+'/ADBCEvents.mon',])
+			c.sendEventStrings("com.apama.connectivity.ApplicationInitialized()")
 		return c
 	
 class ApamaJDBCBaseTest(apama.basetest.ApamaBaseTest):

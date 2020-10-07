@@ -12,10 +12,20 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 			config=f'{self.project.samplesDir}/default_config.yaml',
 			configPropertyOverrides={"jdbc.url":"jdbc:sqlite:test.db"})
 		
+		correlator.injectEPL("test.mon")
 		correlator.flush()
-		#self.waitForGrep('correlator.log', expr="Loaded simple test monitor", 
-		#	process=correlator.process, errorExpr=[' (ERROR|FATAL) .*'])
+		self.waitForGrep('correlator.log', 'com.apama.adbc.StatementDone\(', condition='==5')
 		
 	def validate(self):
-		# look for log statements in the correlator log file
 		self.assertGrep('correlator.log', expr=' (ERROR|FATAL) .*', contains=False)
+		# Query results
+		self.assertOrderedGrep('correlator.log', exprList=[
+			"com.apama.adbc.ResultSetRow\(5,0.*42\)",
+			"com.apama.adbc.ResultSetRow\(5,1.*100\)",
+			"com.apama.adbc.StatementDone\(5,-1,",])
+		# Insert results
+		self.assertOrderedGrep('correlator.log', exprList=[
+			"com.apama.adbc.StatementDone\(1,0,",
+			"com.apama.adbc.StatementDone\(2,1,",
+			"com.apama.adbc.StatementDone\(3,1,",
+			"com.apama.adbc.StatementDone\(4,1,",])

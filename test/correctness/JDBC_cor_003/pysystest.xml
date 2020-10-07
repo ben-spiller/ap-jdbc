@@ -2,7 +2,7 @@
 <pysystest type="auto">
     
   <description> 
-    <title>End-to-end test, inserts and queries</title>    
+    <title>End-to-end happy path test, inserts and queries</title>    
     <purpose><![CDATA[
 ]]>
     </purpose>
