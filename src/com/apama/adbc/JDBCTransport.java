@@ -115,7 +115,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 
-	public void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
+	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
 		List<Message> msgList = new ArrayList<>();
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
