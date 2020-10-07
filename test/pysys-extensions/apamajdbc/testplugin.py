@@ -27,11 +27,13 @@ class ApamaJDBCPlugin(object):
 		
 	def startCorrelator(self, name, **kwargs):
 		"""
-		A wafer-thin wrapper around calling the CorrelatorHelper constructor and start method. 
+		A wrapper around calling the CorrelatorHelper constructor and start method that sets Java and the correct classpath for JDBC
+		testing.
 		TODO: maybe remove this in Apama 10.7 when the standard apama test plugin has the same functionality. 
 		"""
 		c = apama.correlator.CorrelatorHelper(self.owner, name=name)
-		c.start(logfile=name+'.log', **kwargs)
+		c.addToClassPath(f'{self.project.testRootDir}/../lib/sqlite-jdbc-3.8.11.2.jar')
+		c.start(logfile=name+'.log', java=True, **kwargs)
 		return c
 	
 class ApamaJDBCBaseTest(apama.basetest.ApamaBaseTest):
