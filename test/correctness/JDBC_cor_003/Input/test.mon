@@ -4,11 +4,27 @@ using com.apama.adbc.StatementDone;
 
 monitor Test {
 	action onload() {
-		send Statement(1, "CREATE TABLE myTable(myColumn int);") to "JDBC";
-		send Statement(2, "INSERT INTO myTable VALUES(42);") to "JDBC";
-		send Statement(3, "INSERT INTO myTable VALUES(100);") to "JDBC";
-		send Statement(4, "INSERT INTO myTable VALUES(-1);") to "JDBC";
-		send Statement(5, "SELECT * FROM myTable WHERE myColumn > 0;") to "JDBC";
+		Statement stmt := new Statement;
+
+		stmt.messageId := 1;
+		stmt.sql := "CREATE TABLE myTable(myColumn int);";
+		send stmt to "JDBC";
+
+		stmt.messageId := 2;
+		stmt.sql := "INSERT INTO myTable VALUES(42);";
+		send stmt to "JDBC";
+
+		stmt.messageId := 3;
+		stmt.sql := "INSERT INTO myTable VALUES(100);";
+		send stmt to "JDBC";
+
+		stmt.messageId := 4;
+		stmt.sql := "INSERT INTO myTable VALUES(-1);";
+		send stmt to "JDBC";
+
+		stmt.messageId := 5;
+		stmt.sql := "SELECT * FROM myTable WHERE myColumn > 0;";
+		send stmt to "JDBC";
 
 		on all ResultSetRow(messageId=5) as row {
 			log row.toString() at INFO;
