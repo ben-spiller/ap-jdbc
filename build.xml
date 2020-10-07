@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project default="jars" basedir=".">
+<project default="jars">
 	<presetdef name="javac">
 		<javac includeantruntime="false" />
 	</presetdef>
@@ -10,7 +10,7 @@
 
 	<property name="apama-home-jar-dir" location="${env.APAMA_HOME}/lib"/>
 	<property name="common-lib-dir" location="${env.APAMA_HOME}/../common/lib/ext"/>
-	<property name="output-dir" location="${user.dir}/__build"/>
+	<property name="output-dir" location="${basedir}/__build"/>
 	<property name="build-dir" location="${output-dir}/build_work"/>
 	<property name="3rdparty-dir" location="${output-dir}/lib/"/>
 	<tstamp/>
