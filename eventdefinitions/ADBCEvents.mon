@@ -32,12 +32,6 @@ event ResultSchema {
 	dictionary <string, string> fieldTypes;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// Store events
-//
-////////////////////////////////////////////////////////////////////////////////
-
 /** A specialised simpler kind of command that just populates a new row with values */
 event Store {
 	integer messageId;
@@ -52,8 +46,8 @@ event Statement {
 	integer messageId;
 	/** SQL to run */
 	string sql;
-
-	// TODO - parameters for prepared statement
+	/** Parameters for prepared statement */
+	sequence<any> parameters;
 }
 
 /** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
