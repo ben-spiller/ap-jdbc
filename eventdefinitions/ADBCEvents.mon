@@ -29,39 +29,8 @@ package com.apama.adbc;
 event StartQuery {
 	/** Unique id for this query. */
 	integer messageId;
-	/** The service id, Adapter channel name. */
-	string serviceId;
-	/** Database connection id. */
-	integer databaseId;	
 	/** Query to run (either query string or name). */
 	string query;		
-	/** Return Event Type should be one of: Native, Historical, ResultEvent, ResultEventHetero. */
-	string returnType;	
-	/** Event type (name) for use in mapping rules, needed when using Native returnType. */
-	string eventType;
-	/**
-	* Indicates Query is being used for backtest.
-	*
-	* <pre>
-	* This requires:<br>
-	*	1. Only one can be running per database per plugin. <br>
-	*	2. All queries must be time sorted. <br>
-	*	3. The plugin must be able to identify the time attribute <br>
-	*		for all types and possible tie breaker attribute.</pre>
-	*/
-	boolean backtest;
-	/** Generate a status event every n seconds. If n <= 0.0 no status event is generated. */
-	float statusFrequency;
-	/** Speed for back testing: <= 0.0, as fast as possible, > 0.0 -> some multiple of playback speed. */
-	float backtestSpeed;
-	/** Column to use for backtest time attribute, not needed if column name is "time". */
-	string timeColumn;
-	/** PreparedQuery to run. */
-	integer preparedQueryId;
-	/** Input parameters for preparedQuery. */
-	sequence<string> inputParameters; 
-	/** This is currently a container to allow additional information in the future. */
-	dictionary<string,string> extraParams;
 }
 
 /**
