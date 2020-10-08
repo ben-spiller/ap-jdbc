@@ -179,7 +179,14 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			Message statementDoneMsg = new Message(statementDonePayload);
 			statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.StatementDone");
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
-		} catch (SQLException ex) {
+		} 
+		catch (SQLTransientException e){
+			//if this is a transient exception then we should retry it to see if it will just worked
+		}
+		catch (SQLNonTransientException e){
+			//If its a non transient exception then it wont 'just work' unless the cause is corrected
+		}
+		catch (SQLException ex) {
 			/**
 			String message = getSQLExceptionMessage(ex, "Error executing query");
 			
