@@ -111,11 +111,11 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
 		} else if (eventType.equals("Statement")) {
-			executeStatement(payload, m, messageId);
+			executeStatement(payload, m, messageId, 0);
 		}
 	}
 
-	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
+	private void executeStatement(MapExtractor payload, Message m, long messageId, int currentRetryCount) throws Exception{
 		List<Message> msgList = new ArrayList<>();
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
@@ -180,23 +180,24 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.StatementDone");
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 		} 
-		/*catch (SQLTransientException e){
+		catch (SQLTransientException e){
 			//if this is a transient exception then we should retry it to see if it will just worked
 			
-			//if its 0 coming into this catch then uts the first times its failed
-			if (maxRetries == 0){ 
-				maxRetries = 3;
+			//if currentRetryCount is 0 coming into this catch then uts the first times its failed
+			if (currentRetryCount == 0){ 
+				currentRetryCount = maxRetries;
+			}
 			else{
-				maxRetries = maxRetries - 1;
+				currentRetryCount = currentRetryCount - 1;
 			}
 
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
 			List<Object> parameters = payload.getList("parameters", Object.class, false);
-			// If maxRetries is 0 at this stage then all retries have been exhausted
-			if (maxRetries > 0){
+			// If currentRetryCount is 0 at this stage then all retries have been exhausted
+			if (currentRetryCount > 0){
 				logger.warn("Statement execution failed with a transient error and will now be retried - " + sql_string + " (" + parameters +")" );
 				//TODO should we wait before retrying?
-				executeStatement(payload, m, messageId);
+				executeStatement(payload, m, messageId, currentRetryCount);
 			}
 			else{
 				logger.warn("Statement execution failed nd has been retried a maximum number of times - " + sql_string + " (" + parameters +")");
@@ -206,7 +207,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 		catch (SQLNonTransientException e){
 			//If its a non transient exception then it wont 'just work' unless the cause is corrected
-		}*/
+		}
 		catch (SQLException ex) {
 			/**
 			String message = getSQLExceptionMessage(ex, "Error executing query");
