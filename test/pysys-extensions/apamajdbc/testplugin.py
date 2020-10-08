@@ -23,7 +23,7 @@ class ApamaJDBCPlugin(object):
 		self.DEFAULT_DB='sqlite'
 		#key with jar file, classname, username, password, url
 		self.VALID_JDBC_VENDOR_DATA = {'sqlite':['sqlite-jdbc-3.8.11.2.jar','org.sqlite.JDBC',None,'','jdbc:sqlite:test.db'], 
-									   'mysql' :['mysql-connector-java-8.0.21.jar','com.mysql.cj.jdbc.Driver','mysql','mysql','jdbc:mysql://localhost:33060/innodb']}
+									   'mysql' :['mysql-connector-java-8.0.21.jar','com.mysql.cj.jdbc.Driver','root','mysql','jdbc:mysql://localhost:3306/mysql']}
 
 	def getUsername(self):
 		return self.VALID_JDBC_VENDOR_DATA[self.DEFAULT_DB][self.USERNAME_IDX]
