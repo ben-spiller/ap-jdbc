@@ -30,7 +30,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	final String username;
 	final String password;
 	final Hashtable<?,?> jndiEnvironment;
-	
+	final int maxRetries = 3;
 	
 	/** How often to automatically commit the connection. Set to 0 to disable. 
 	 * This is usually more performant than the "autoCommit" JDBC feature which does it after every statement. */
@@ -182,6 +182,27 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		} 
 		catch (SQLTransientException e){
 			//if this is a transient exception then we should retry it to see if it will just worked
+			
+			//if its 0 coming into this catch then uts the first times its failed
+			if (maxRetries == 0){ 
+				maxRetries = 3;
+			else{
+				maxRetries = maxRetries - 1;
+			}
+
+			String sql_string = payload.getStringDisallowEmpty("sql"); 
+			List<Object> parameters = payload.getList("parameters", Object.class, false);
+			// If maxRetries is 0 at this stage then all retries have been exhausted
+			if (maxRetries > 0){
+				logger.warn("Statement execution failed with a transient error and will now be retried - " + sql_string + " (" + parameters +")" );
+				//TODO should we wait before retrying?
+				executeStatement(payload, m, messageId);
+			}
+			else{
+				logger.warn("Statement execution failed nd has been retried a maximum number of times - " + sql_string + " (" + parameters +")");
+				// Throw exception and send statementDone/uery Done - back to use with the failure
+			}
+			
 		}
 		catch (SQLNonTransientException e){
 			//If its a non transient exception then it wont 'just work' unless the cause is corrected
