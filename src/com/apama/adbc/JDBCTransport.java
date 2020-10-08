@@ -25,10 +25,10 @@ public class JDBCTransport extends AbstractSimpleTransport {
 
 	final int batchSize = 500;
 	final String jdbcURL;
+	final String jdbcUser;
+	final String jdbcPassword;
 	final String jndiName;
 
-	final String username;
-	final String password;
 	final Hashtable<?,?> jndiEnvironment;
 	final int maxRetries = 3;
 	
@@ -52,8 +52,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		jdbcURL = config.getStringDisallowEmpty("jdbcURL");
 		if (!(jndiName == null ^ jdbcURL == null)) throw new IllegalArgumentException("Must set one of: jndiName, jdbcURL");
 
-		username = config.getStringDisallowEmpty("username", null);
-		password = config.getStringDisallowEmpty("password", "");
+		jdbcUser = config.getStringDisallowEmpty("jdbcUser", null);
+		jdbcPassword = config.getStringDisallowEmpty("jdbcPassword", "");
 
 		periodicCommitIntervalSecs = config.get("periodicCommitIntervalSecs", 5.0f);
 		
@@ -74,7 +74,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		if (jndi == null)
 			jndi = new InitialContext(jndiEnvironment);
 		DataSource ds = (DataSource)jndi.lookup(jndiName);
-		if (username != null) return ds.getConnection(username, password);
+		if (jdbcUser != null) return ds.getConnection(jdbcUser, jdbcPassword);
 		return ds.getConnection();
 	}
 	

@@ -16,7 +16,8 @@ startChains:
 #        - mapperCodec:
         - JDBCTransport:
             jdbcURL: ${jdbc.url}
-
+            jdbcUser: ${jdbc.user}
+            jdbcPassword: ${jdbc.password}
 
     storeEvents:
         - apama.eventMap:
@@ -32,6 +33,8 @@ startChains:
                         - payload.tableName: "StoredEvents"
         - JDBCTransport:
             jdbcURL: ${jdbc.url}
+            jdbcUser: ${jdbc.user}
+            jdbcPassword: ${jdbc.password}
 
     recoverEvents:
         - apama.eventMap:
@@ -44,6 +47,8 @@ startChains:
                         - payload: payload.row
         - JDBCTransport:
             jdbcURL: ${jdbc.url}
+            jdbcUser: ${jdbc.user}
+            jdbcPassword: ${jdbc.password}
             
 
 
