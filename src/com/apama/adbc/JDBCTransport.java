@@ -212,6 +212,13 @@ public class JDBCTransport extends AbstractSimpleTransport {
 						Message resultMsg = new Message(resultPayload);
 						resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultSetRow");
 						msgList.add(resultMsg);
+						if (msgList.size() >= batchSize){
+							//TODO addin back in btching ability, need to confirm with Richard if this was deliberately removed, also lastEventTime
+							//lastEventTime = System.currentTimeMillis();	
+							// Send the result event(s) to the Host
+							hostSide.sendBatchTowardsHost(msgList);
+							msgList.clear();
+						}		
 					}
 					rowId = rowId + 1;
 				}
