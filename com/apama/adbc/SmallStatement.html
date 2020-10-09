@@ -3,12 +3,12 @@
 
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<TITLE>Statement</TITLE>
-<META NAME="keywords" CONTENT="Statement&nbsp;event">
+<TITLE>SmallStatement</TITLE>
+<META NAME="keywords" CONTENT="SmallStatement&nbsp;event">
 <LINK REL="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style">
 <SCRIPT type="text/javascript">function windowTitle()
           {
-          parent.document.title="Statement";
+          parent.document.title="SmallStatement";
           }
           </SCRIPT>
 <NOSCRIPT></NOSCRIPT>
@@ -16,9 +16,9 @@
 <BODY BGCOLOR="white" onload="windowTitle();">
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
-<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/Statement.html"><B>FRAMES</B></A>  &nbsp;
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SmallStatement.html"><B>FRAMES</B></A>  &nbsp;
 
-            &nbsp;<A target="_top" HREF="Statement.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<A target="_top" HREF="SmallStatement.html"><B>NO FRAMES</B></A>  &nbsp;
             &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
 <NOSCRIPT>
 <A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>
@@ -44,28 +44,23 @@
 <HR>
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
-<BR>Event Statement</H2>
-<HR>Execute an SQL statement, which may be a query (resulting some results).<br>
-<br> Any results will be retrned in individual ResultSetRows.<HR>
+<BR>Event SmallStatement</H2>
+<HR>Execute an SQL statement, which is expected to have a small number of results .<br>
+<br> In this scenario you shoudl expect all results to be returned in one SmallResultsSet event rather than individual ResultSetRows.<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
 <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2"><B>Member summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#messageId">messageId</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/Statement.html" title="type in com.apama.adbc">com.apama.adbc.Statement</A></CODE></FONT></TD><TD><CODE><B><A HREF="SmallStatement.html#statement">statement</A></B></CODE>
 <br>
-<br>Unique id identifying this Statement</TD>
+<br>Details of the statement to be executed.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#sql">sql</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SmallStatement.html#maxSmallQuerySize">maxSmallQuerySize</A></B></CODE>
 <br>
-<br>SQL to run</TD>
-</TR>
-<TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;any&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#parameters">parameters</A></B></CODE>
-<br>
-<br>Parameters for prepared statement.</TD>
+<br>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -73,26 +68,21 @@
 <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Member detail</B></FONT></TH>
 </TR>
 </TABLE>
-<A NAME="messageId"></A>
-<H3>messageId</H3>
-<PRE>integer&nbsp;<B>messageId</B>
-</PRE>Unique id identifying this Statement<HR>
-<A NAME="parameters"></A>
-<H3>parameters</H3>
-<PRE>sequence&lt;any&gt;&nbsp;<B>parameters</B>
-</PRE>Parameters for prepared statement.<br>
-<br> If any parameters are provided, the SQL is sent to the database as a prepared statement allowing for fast repeated execution.<br>
-<br> If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker for single uses (and slower for repeated uses), but you need to be extremely careful to validate and escape any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if .<HR>
-<A NAME="sql"></A>
-<H3>sql</H3>
-<PRE>string&nbsp;<B>sql</B>
-</PRE>SQL to run<HR>
+<A NAME="maxSmallQuerySize"></A>
+<H3>maxSmallQuerySize</H3>
+<PRE>integer&nbsp;<B>maxSmallQuerySize</B>
+</PRE>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.<HR>
+<A NAME="statement"></A>
+<H3>statement</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/Statement.html" title="type in com.apama.adbc">com.apama.adbc.Statement</A>&nbsp;<B>statement</B>
+</PRE>Details of the statement to be executed.<HR>
 <HR>
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
-<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/Statement.html"><B>FRAMES</B></A>  &nbsp;
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SmallStatement.html"><B>FRAMES</B></A>  &nbsp;
 
-            &nbsp;<A target="_top" HREF="Statement.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<A target="_top" HREF="SmallStatement.html"><B>NO FRAMES</B></A>  &nbsp;
             &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
 <NOSCRIPT>
 <A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>
