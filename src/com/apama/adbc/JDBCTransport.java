@@ -137,7 +137,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		List<Message> msgList = new ArrayList<>();
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
-			List<Object> parameters = payload.getList("parameters", Object.class, false);
+			List<Object> parameters = payload.getList("parameters", Object.class, true);
 			Statement stmt = null;
 			boolean resultsAvailable;
 
@@ -148,7 +148,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				PreparedStatement stmt_ = getPreparedStatement(sql_string);
 				int i = 1;
 				for(Object param : parameters) {
-					stmt_.setObject(i, param);
+					stmt_.setObject(i, param); // TODO: does this work for all valid SQL types e.g. XML, blob, etc?
 					i++;
 				}
 				resultsAvailable = stmt_.execute();
