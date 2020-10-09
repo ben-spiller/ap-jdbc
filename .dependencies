@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <apama-project>
 	<dependency>
-		<dependencyentry path="" kind="src"/>
+		<dependencyentry path="" kind="src" excluding="test/"/>
 	</dependency>
 	<catalogs>
 		<catalog path="catalogs/Generated scenario blocks" type="block"/>

@@ -10,6 +10,9 @@ package com.apama.adbc;
 //
 //*****************************************************************************
 
+
+// TODO: document how people should generate unique IDs e.g. integer.incrementCounter("jdbc");
+
 /**
 * Event in response to the StartQuery event to indicate the result's schema.
 *
@@ -40,7 +43,7 @@ event Store {
 }
 
 
-/** Execute an SQL statement */
+/** Execute an SQL statement, which may be a query (resulting some results) */
 event Statement {
 	/** Unique id identifying this Statement */
 	integer messageId;
@@ -56,7 +59,15 @@ event Statement {
 	integer maxSmallQuerySize;
 	/** SQL to run */
 	string sql;
-	/** Parameters for prepared statement */
+	/** Parameters for prepared statement. 
+	
+	If any parameters are provided, the SQL is sent to the database as a prepared statement allowing for 
+	fast repeated execution. 
+	
+	If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker 
+	for single uses (and slower for repeated uses), but you need to be extremely careful to validate and escape 
+	any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if . 
+	*/
 	sequence<any> parameters;
 }
 
@@ -81,15 +92,15 @@ event ResultSetRow {
 	/** Unique id identifying the Statement that this is in response to */
 	integer messageId;
 	/** unique Id for each row
-	* This is useful if you ned to rerun a query and dont 
+	* This is useful if you ned to rerun a query and don't 
 	* expect the underlying data to change.
 	*/
 	integer rowId;
-	/** The result data. */
+	/** The row data, keyed by column name. */
 	dictionary <string, any> row;
 }
 
-/** Response to Statement */
+/** Sent when a statement has finished executing, either successfully or unsuccessfully.  */
 event StatementDone {
 	/** Unique id identifying the Statement that this is in response to */
 	integer messageId;
@@ -97,6 +108,7 @@ event StatementDone {
 	/** Number of rows updated by the Statement */
 	integer updateCount;
 
-	// TODO - more sophisticated error reporting
-	optional<string> error;
+	/** Empty string if it completed successfully, or an error message if it did not. */
+	optional<string> error; // TODO: change to a simple string, since can't match on it if use optional
+
 }
