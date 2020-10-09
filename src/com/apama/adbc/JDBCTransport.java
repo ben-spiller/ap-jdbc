@@ -138,28 +138,30 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 
+	// This method assumes it's not called concurrently by more than one thread
 	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
 		executeStatement(payload, m, messageId, false, -1);
 	}
 
 	private void executeStatement(MapExtractor payload, Message m, long messageId, boolean smallResultSet, long maxSmallQuerySize) throws Exception{
-		List<Message> msgList = new ArrayList<>(); 
-		List<Map <String, Object>> rowList = new ArrayList<>();
+		Statement stmt = null;
+		ResultSet rs = null;
+
 		try {
 			//TODO this works find for normal Statments - for Small statments sql and parameters are at the wrong level 
 			// in the payload to read them with the following, either the payload passed in needs to change or reading them for SmallStataments does.
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
 			List<Object> parameters = payload.getList("parameters", Object.class, true);
-			Statement stmt = null;
 			boolean resultsAvailable;
 
-			if(parameters.isEmpty()) {
+			if (parameters.isEmpty()) {
 				stmt = jdbcConn.createStatement();
 				resultsAvailable = stmt.execute(sql_string);
 			} else {
 				PreparedStatement stmt_ = getPreparedStatement(sql_string);
 				int i = 1;
 				for(Object param : parameters) {
+					// TODO: "Not all databases allow for a non-typed Null to be sent to the backend. For maximum portability, the setNull or the setObject(int parameterIndex, Object x, int sqlType) method should be used instead of setObject(int parameterIndex, Object x)."
 					stmt_.setObject(i, param); // TODO: does this work for all valid SQL types e.g. XML, blob, etc?
 					i++;
 				}
@@ -168,11 +170,12 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				stmt = stmt_;
 			}
 
-			ResultSet rs = null;
-
 			if(resultsAvailable) {
 				rs = stmt.getResultSet();
 			}
+
+			List<Message> msgList = new ArrayList<>();
+			List<Map <String, Object>> rowList = new ArrayList<>();
 
 			int rowId = 0;
 			// For each ResultSet
@@ -296,13 +299,9 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			*/
 		}
 		finally {
-			/**
-			// TODO: clean up
-			if (rs != null)	try	{rs.close();} catch(SQLException ex) {}
-			if (stmt != null) try {stmt.close();} catch(SQLException ex) {}
-			stmt = null;
-			rs = null;
-			*/
+			tryElseWarn(rs,  x->x.close(), "Could not close ResultSet object for "+stmt+": ");
+			if (!(stmt instanceof PreparedStatement)) 
+				tryElseWarn(stmt, x -> x.close(), "Could not close statement object "+stmt+": ");
 		}
 	}
 
@@ -489,6 +488,25 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		return error;
 	}
 
+	/** Helper method that executes the specified lambda expression to close a resource and logs a warning if it throws an exception. 
+	 * 
+	 * @param lambda e.g. <code>() -> foo.bar()</code>
+	 * @param logMessagePrefix e.g. "Could not do thingummy: ".
+	 */
+	<T> boolean tryElseWarn(T obj, CanThrowWithParam<T> lambda, String logMessagePrefix)
+	{
+		if (obj == null) return true;
+		try
+		{
+			lambda.run(obj);
+			return true;
+		} catch (Exception e)
+		{
+			logger.warn(logMessagePrefix, e);
+			return false;
+		}
+	}
+	
 	/** Helper method that executes the specified lambda expression and logs a warning if it throws an exception. 
 	 * 
 	 * @param lambda e.g. <code>() -> foo.bar()</code>
@@ -507,6 +525,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 	public interface CanThrow { void run() throws Exception; }
+	public interface CanThrowWithParam<T> { void run(T obj) throws Exception; }
 	
 	public void shutdown() 
 	{
@@ -519,8 +538,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			
 			tryElseWarn(() -> jdbcConn.close(), "Could not close the JDBC connection: ");
 		}
-		if (jndi != null) 
-			tryElseWarn(() -> jndi.close(), "Could not close JNDI context: ");
+		tryElseWarn(jndi, x -> x.close(), "Could not close JNDI context: ");
 	}
 
 	/**
