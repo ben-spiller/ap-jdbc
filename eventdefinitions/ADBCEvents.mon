@@ -48,7 +48,7 @@ event Statement {
 	* If its small it will be returned in one SmallResultsSet event rather 
 	* than individual ResultSetRows.
 	*/
-	bool smallResultSet;
+	boolean smallResultSet;
 	/** Indicate the max results allowed if this is a smallResultSet. 
 	* If it turns out there were more results than expected, only the amount up 
 	* to maxSmallQuerySize will be returned and the statement is stopped after that.
