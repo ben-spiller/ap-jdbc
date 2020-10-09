@@ -22,8 +22,11 @@ monitor Test {
 		stmt.sql := "INSERT INTO myTable VALUES(-1);";
 		send stmt to "JDBC";
 
+		log "Do Query" at INFO;
 		stmt.messageId := 5;
 		stmt.sql := "SELECT * FROM myTable WHERE myColumn > 0;";
+		stmt.smallResultSet := true;
+		stmt.maxSmallQuerySize := 10;
 		send stmt to "JDBC";
 
 		on all ResultSetRow(messageId=5) as row {

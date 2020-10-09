@@ -29,6 +29,8 @@ startChains:
                         - payload.row._apama_type: metadata.sag.type
                     defaultValue:
                         - payload.messageId: -1
+                        - payload.smallResultSet: false
+                        - payload.maxSmallQuerySize: -1                        
                         - metadata.sag.type: "com.apama.adbc.Store"
                         - payload.tableName: "StoredEvents"
         - JDBCTransport:

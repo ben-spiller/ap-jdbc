@@ -120,12 +120,15 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		@SuppressWarnings("rawtypes")
 		MapExtractor payload = new MapExtractor((Map)m.getPayload(), "payload");
 
+		logger.info("****Receive request from host");
 		// Unique id generic to all events from EPL, used in acknowledgements
 		long messageId = payload.get("messageId", -1L);
-
 		if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
 		} else if (eventType.equals("Statement")) {
+			boolean smallResultSet = payload.get("smallResultSet", Boolean.class);
+			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
+			logger.info("Received execute Statement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
 			executeStatement(payload, m, messageId);
 		}
 	}
