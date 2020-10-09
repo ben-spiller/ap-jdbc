@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Collections;
+import java.util.Properties;
 import com.softwareag.connectivity.AbstractSimpleTransport;
 import com.softwareag.connectivity.Message;
 import com.softwareag.connectivity.PluginConstructorParameters.TransportConstructorParameters;
@@ -25,10 +26,10 @@ public class JDBCTransport extends AbstractSimpleTransport {
 
 	final int batchSize = 500;
 	final String jdbcURL;
+	final String jdbcUser;
+	final String jdbcPassword;
 	final String jndiName;
 
-	final String username;
-	final String password;
 	final Hashtable<?,?> jndiEnvironment;
 	final int maxRetries = 3;
 	
@@ -52,8 +53,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		jdbcURL = config.getStringDisallowEmpty("jdbcURL");
 		if (!(jndiName == null ^ jdbcURL == null)) throw new IllegalArgumentException("Must set one of: jndiName, jdbcURL");
 
-		username = config.getStringDisallowEmpty("username", null);
-		password = config.getStringDisallowEmpty("password", "");
+		jdbcUser = config.getStringDisallowEmpty("jdbcUser", null);
+		jdbcPassword = config.getStringDisallowEmpty("jdbcPassword", "");
 
 		periodicCommitIntervalSecs = config.get("periodicCommitIntervalSecs", 5.0f);
 		
@@ -65,22 +66,36 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	private Connection createConnection() throws Exception
 	{
 		// TODO: automatic retry connection establishment (unless shutting down)
-		
-		if (jdbcURL != null) return DriverManager.getConnection(jdbcURL);
+		Connection returnConn;
+		Properties sqlprops = new Properties();
+		//username and password properties may be different for different databases
+		if (jdbcUser != null){
+			sqlprops.setProperty("user",jdbcUser);
+			sqlprops.setProperty("password", jdbcPassword);
+		}
+		if (jdbcURL != null) returnConn = DriverManager.getConnection(jdbcURL, sqlprops);
 		
 		// Preferred/modern approach is to get a DataSource instance from JNDI, which allows for connection pooling
 		
 		// TODO: check if we need to set thread context classloader (see Kafka plugin and also itrac, can't remember if we do this automatically or not)
-		if (jndi == null)
-			jndi = new InitialContext(jndiEnvironment);
-		DataSource ds = (DataSource)jndi.lookup(jndiName);
-		if (username != null) return ds.getConnection(username, password);
-		return ds.getConnection();
+		else {
+			if (jndi == null)
+				jndi = new InitialContext(jndiEnvironment);
+			DataSource ds = (DataSource)jndi.lookup(jndiName);
+			if (jdbcUser != null) {
+				returnConn = ds.getConnection(jdbcUser, jdbcPassword);
+			}else{
+				returnConn = ds.getConnection();
+			}
+		}
+		return returnConn;
 	}
 	
 	public void start() throws Exception {
 		jdbcConn = createConnection();
 		jdbcConn.setAutoCommit(false);
+		//make sure the connection is valid
+		boolean goodConn = jdbcConn.isValid(5); //will throw if this fails
 
 		if (periodicCommitIntervalSecs >= 0)
 			periodicCommitThread = new ApamaThread("JDBCTransport.periodicCommitThread") {
