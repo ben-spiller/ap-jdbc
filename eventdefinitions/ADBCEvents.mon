@@ -44,6 +44,16 @@ event Store {
 event Statement {
 	/** Unique id identifying this Statement */
 	integer messageId;
+	/** Indicate if the resultSet is expected to be small.
+	* If its small it will be returned in one SmallResultsSet event rather 
+	* than individual ResultSetRows.
+	*/
+	bool smallResultSet;
+	/** Indicate the max results allowed if this is a smallResultSet. 
+	* If it turns out there were more results than expected, only the amount up 
+	* to maxSmallQuerySize will be returned and the statement is stopped after that.
+	*/
+	integer maxSmallQuerySize;
 	/** SQL to run */
 	string sql;
 	/** Parameters for prepared statement */
@@ -53,19 +63,17 @@ event Statement {
 /** Returned for small ResultSets
 * if the executed statement is expected to return a small set of results,
 * Then they are all returned at once in this event
-* rather thans individually in separate ResultSetRows.
+* rather than individually in separate ResultSetRows.
 */ 
 event SmallResultsSet{
 	/** Unique id identifying the Statement that this is in response to */
 	integer messageId;
 	
 	/** The result data. 
-	* Thsi is expected to contain multiple Rows so will be of the form
-	* dictonary<integer, dictionary <string, any> row>
-	* Where the first parameter of integer is each rowId and 
-	* the second parameter is the result data.
+	* This is expected to contain a sequence of multiple rows where
+	* each dictionary element contains a rows result data.
 	*/	
-	any rows;
+	sequence<dictionary<string,any>> rows;
 }
 
 /** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
