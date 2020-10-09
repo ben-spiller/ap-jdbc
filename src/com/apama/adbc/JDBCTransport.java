@@ -126,11 +126,11 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
 		} else if (eventType.equals("Statement")) {
-			executeStatement(payload, m, messageId, 0);
+			executeStatement(payload, m, messageId);
 		}
 	}
 
-	private void executeStatement(MapExtractor payload, Message m, long messageId, int currentRetryCount) throws Exception{
+	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
 		List<Message> msgList = new ArrayList<>();
 		try {
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
@@ -196,7 +196,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 		} 
 		catch (SQLTransientException e){
-			//if this is a transient exception then we should retry it to see if it will just worked
+			/*//if this is a transient exception then we should retry it to see if it will just worked
 			
 			//if currentRetryCount is 0 coming into this catch then uts the first times its failed
 			if (currentRetryCount == 0){ 
@@ -217,7 +217,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			else{
 				logger.warn("Statement execution failed nd has been retried a maximum number of times - " + sql_string + " (" + parameters +")");
 				// Throw exception and send statementDone/uery Done - back to use with the failure
-			}
+			}*/
 			
 		}
 		catch (SQLNonTransientException e){
