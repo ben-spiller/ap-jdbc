@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.lang.Thread;
 import com.apama.util.concurrent.ApamaThread;
 
+/**
+ * Each instance of this transport is single-threaded (TODO: check this is always followed)
+ */
 public class JDBCTransport extends AbstractSimpleTransport {
 	InitialContext jndi;
 	Connection jdbcConn;
@@ -183,6 +186,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					rowId = rowId + 1;
 				}
 
+				rs.close();
 				rs = stmt.getMoreResults() ? stmt.getResultSet() : null;
 			}
 			if (msgList.size() >0) {
@@ -245,7 +249,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 		finally {
 			/**
-			// clean up
+			// TODO: clean up
 			if (rs != null)	try	{rs.close();} catch(SQLException ex) {}
 			if (stmt != null) try {stmt.close();} catch(SQLException ex) {}
 			stmt = null;
@@ -273,6 +277,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				}
 			}
 			Statement stmtActual = jdbcConn.createStatement();
+			// TODO: SQL injection attack here
 			stmtActual.executeUpdate("CREATE TABLE IF NOT EXISTS '" + tableName + "' (" + schema + ")");
 			stmtActual.close();
 			tableSchema = jdbcConn.getMetaData().getColumns(null, null, tableName, null);
@@ -461,7 +466,9 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			ApamaThread.cancelAndJoin(5000, true,  periodicCommitThread);
 		
 		if (jdbcConn != null) {
-			tryElseWarn(() -> jdbcConn.commit(), "Could not perform a final commit on the JDBC connection: ");
+			if (periodicCommitThread != null)
+				tryElseWarn(() -> jdbcConn.commit(), "Could not perform a final commit on the JDBC connection: ");
+			
 			tryElseWarn(() -> jdbcConn.close(), "Could not close the JDBC connection: ");
 		}
 		if (jndi != null) 
