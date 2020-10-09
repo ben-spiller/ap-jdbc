@@ -27,7 +27,7 @@ package com.apama.adbc;
 *     Channel: <verbatim><</verbatim>serviceId<verbatim>></verbatim>.Control
 */
 event ResultSchema {
-	/** Unique id for this query. */
+	/** Unique id for this request. */
 	integer messageId;
 	/** The order of the fields in the schema. */
 	sequence <string> fieldOrder;
@@ -43,16 +43,23 @@ event Store {
 }
 
 
-/** Execute an SQL statement, which may be a query (resulting some results).
-*
-*  Any results will be retrned in individual ResultSetRows.
+/** Execute an SQL statement, which may be a query (returning a set of results) or an update command.
+
+This will be executed as a prepared statement if one or more parameters are provided. 
 */
 event Statement {
-	/** Unique id identifying this Statement */
+	/** Unique id identifying this request */
 	integer messageId;
 
-	/** SQL to run */
+	/** SQL to execute. 
+	Be sure to strictly validate and escape any user-provided strings included in the SQL 
+	to avoid the risk of SQL injection vulnerabilities. 
+	
+	Alternatively, specify parameters using "?" syntax (which will safely escape them and also result in a prepared statement 
+	being used on the database server).  
+	*/
 	string sql;
+	
 	/** Parameters for prepared statement. 
 	
 	If any parameters are provided, the SQL is sent to the database as a prepared statement allowing for 
@@ -65,7 +72,7 @@ event Statement {
 	sequence<any> parameters;
 }
 
-/** Execute an SQL statement, which is expected to have a small number of results .
+/** Execute an SQL statement, which is expected to have a small number of results that should be returned in a single event.
 *
 * In this scenario you shoudl expect all results to be returned in one 
 * SmallResultsSet event rather than individual ResultSetRows.
@@ -74,7 +81,7 @@ event SmallStatement {
 	/** Details of the statement to be executed. */
 	Statement statement;
 	
-	/** Indicate the max results allowed if this is a smallResultSet. 
+	/** Indicate the max rows allowed.
 	* If it turns out there were more results than expected, only the amount up 
 	* to maxSmallQuerySize will be returned and the statement is stopped after that.
 	*/
@@ -87,7 +94,7 @@ event SmallStatement {
 * rather than individually in separate ResultSetRows.
 */ 
 event SmallResultsSet{
-	/** Unique id identifying the Statement that this is in response to */
+	/** Unique id identifying the request */
 	integer messageId;
 	
 	/** The result data. 
@@ -99,7 +106,7 @@ event SmallResultsSet{
 
 /** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
 event ResultSetRow {
-	/** Unique id identifying the Statement that this is in response to */
+	/** Unique id identifying the request */
 	integer messageId;
 	/** unique Id for each row
 	* This is useful if you ned to rerun a query and don't 
@@ -112,7 +119,7 @@ event ResultSetRow {
 
 /** Sent when a statement has finished executing, either successfully or unsuccessfully.  */
 event StatementDone {
-	/** Unique id identifying the Statement that this is in response to */
+	/** Unique id identifying the request. */
 	integer messageId;
 
 	/** Number of rows updated by the Statement */
