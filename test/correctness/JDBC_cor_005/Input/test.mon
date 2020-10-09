@@ -1,5 +1,7 @@
 using com.apama.adbc.Statement;
+using com.apama.adbc.SmallStatement;
 using com.apama.adbc.ResultSetRow;
+using com.apama.adbc.SmallResultsSet;
 using com.apama.adbc.StatementDone;
 
 monitor Test {
@@ -22,16 +24,33 @@ monitor Test {
 		stmt.sql := "INSERT INTO myTable VALUES(-1);";
 		send stmt to "JDBC";
 
+		log "Do SmallQuery" at INFO;
 		stmt.messageId := 5;
 		stmt.sql := "SELECT * FROM myTable WHERE myColumn > 0;";
-		send stmt to "JDBC";
+		
+		SmallStatement smallStmt := new SmallStatement;
+		smallStmt.statement := stmt;
+		smallStmt.maxSmallQuerySize := 10;
+		send smallStmt to "JDBC";
 
 		on all ResultSetRow(messageId=5) as row {
+			log "Should not receive individual Result Rows";
 			log row.toString() at INFO;
 		}
 
+		on all SmallResultsSet(messageId=5) as srs{
+			log "Received Small Result set - should only see this once for this test" at INFO;
+			//parse all rows received
+			//integer i := 0;
+			dictionary <string, any> row;
+			for row in srs.rows{
+				log row.toString() at INFO;
+			}
+		}
+		
 		on all StatementDone() as sd {
-			log sd.toString();
+			//if sd.error.
+			log "Statement Done received " + sd.toString();
 		}
 	}
 }

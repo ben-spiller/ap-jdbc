@@ -128,16 +128,26 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
 		} else if (eventType.equals("Statement")) {
-			boolean smallResultSet = payload.get("smallResultSet", Boolean.class);
-			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
-			//logger.info("Received execute Statement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
 			executeStatement(payload, m, messageId);
+		} else if (eventType.equals("SmallStatement")) {
+			boolean smallResultSet = true;
+			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
+			logger.info("Received execute SmallStatement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
+			payload = new MapExtractor((Map)m.getPayload(), "payload.statement");
+			executeStatement(payload, m, messageId, smallResultSet, maxSmallQuerySize);
 		}
 	}
 
 	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
-		List<Message> msgList = new ArrayList<>();
+		executeStatement(payload, m, messageId, false, -1);
+	}
+
+	private void executeStatement(MapExtractor payload, Message m, long messageId, boolean smallResultSet, long maxSmallQuerySize) throws Exception{
+		List<Message> msgList = new ArrayList<>(); 
+		List<Map <String, Object>> rowList = new ArrayList<>();
 		try {
+			//TODO this works find for normal Statments - for Small statments sql and parameters are at the wrong level 
+			// in the payload to read them with the following, either the payload passed in needs to change or reading them for SmallStataments does.
 			String sql_string = payload.getStringDisallowEmpty("sql"); 
 			List<Object> parameters = payload.getList("parameters", Object.class, true);
 			Statement stmt = null;
@@ -175,21 +185,52 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					for(int i = 1; i <= rsmd.getColumnCount(); i++) {
 						rowMap.put(rsmd.getColumnName(i), rs.getObject(i));
 					}
-					Map<String, Object> resultPayload = new HashMap<>();
-					resultPayload.put("row", rowMap);
-					resultPayload.put("messageId", messageId);
-					resultPayload.put("rowId", rowId);
-					Message resultMsg = new Message(resultPayload);
-					resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultSetRow");
-					msgList.add(resultMsg);
-
+					
+					if (smallResultSet == true){
+						rowList.add(rowMap);
+						if (rowList.size() >= maxSmallQuerySize){
+							//send back a new event containing all rows
+							Map<String, Object> smallResultPayload = new HashMap<>();
+							smallResultPayload.put("messageId", messageId);
+							smallResultPayload.put("rows", rowList);
+							Message smallResultMsg = new Message(smallResultPayload);
+							smallResultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.SmallResultsSet");
+							msgList.add(smallResultMsg);
+							hostSide.sendBatchTowardsHost(msgList);
+							
+							rowList.clear();
+							msgList.clear();
+							//TODO if results are still available, stop the query and ignore any other incoming reults;
+							//...
+						}
+					}
+					else{
+						Map<String, Object> resultPayload = new HashMap<>();
+						resultPayload.put("row", rowMap);
+						resultPayload.put("messageId", messageId);
+						resultPayload.put("rowId", rowId);
+						Message resultMsg = new Message(resultPayload);
+						resultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.ResultSetRow");
+						msgList.add(resultMsg);
+					}
 					rowId = rowId + 1;
 				}
 
 				rs.close();
 				rs = stmt.getMoreResults() ? stmt.getResultSet() : null;
 			}
-			if (msgList.size() >0) {
+			
+			if (smallResultSet == true && rowList.size() >= maxSmallQuerySize){
+				//send back a new event containing all rows
+			Map<String, Object> smallResultPayload = new HashMap<>();
+				smallResultPayload.put("messageId", messageId);
+				smallResultPayload.put("rows", rowList);
+				Message smallResultMsg = new Message(smallResultPayload);
+				smallResultMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.SmallResultsSet");
+				msgList.add(smallResultMsg);
+				hostSide.sendBatchTowardsHost(msgList);
+			}
+			else if (msgList.size() >0) {
 				hostSide.sendBatchTowardsHost(msgList);
 			}
 

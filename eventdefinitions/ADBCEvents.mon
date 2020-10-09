@@ -43,20 +43,14 @@ event Store {
 }
 
 
-/** Execute an SQL statement, which may be a query (resulting some results) */
+/** Execute an SQL statement, which may be a query (resulting some results).
+*
+*  Any results will be retrned in individual ResultSetRows.
+*/
 event Statement {
 	/** Unique id identifying this Statement */
 	integer messageId;
-	/** Indicate if the resultSet is expected to be small.
-	* If its small it will be returned in one SmallResultsSet event rather 
-	* than individual ResultSetRows.
-	*/
-	boolean smallResultSet;
-	/** Indicate the max results allowed if this is a smallResultSet. 
-	* If it turns out there were more results than expected, only the amount up 
-	* to maxSmallQuerySize will be returned and the statement is stopped after that.
-	*/
-	integer maxSmallQuerySize;
+
 	/** SQL to run */
 	string sql;
 	/** Parameters for prepared statement. 
@@ -69,6 +63,22 @@ event Statement {
 	any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if . 
 	*/
 	sequence<any> parameters;
+}
+
+/** Execute an SQL statement, which is expected to have a small number of results .
+*
+* In this scenario you shoudl expect all results to be returned in one 
+* SmallResultsSet event rather than individual ResultSetRows.
+*/
+event SmallStatement {
+	/** Details of the statement to be executed. */
+	Statement statement;
+	
+	/** Indicate the max results allowed if this is a smallResultSet. 
+	* If it turns out there were more results than expected, only the amount up 
+	* to maxSmallQuerySize will be returned and the statement is stopped after that.
+	*/
+	integer maxSmallQuerySize;	
 }
 
 /** Returned for small ResultSets
