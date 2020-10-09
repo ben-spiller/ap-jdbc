@@ -50,6 +50,24 @@ event Statement {
 	sequence<any> parameters;
 }
 
+/** Returned for small ResultSets
+* if the executed statement is expected to return a small set of results,
+* Then they are all returned at once in this event
+* rather thans individually in separate ResultSetRows.
+*/ 
+event SmallResultsSet{
+	/** Unique id identifying the Statement that this is in response to */
+	integer messageId;
+	
+	/** The result data. 
+	* Thsi is expected to contain multiple Rows so will be of the form
+	* dictonary<integer, dictionary <string, any> row>
+	* Where the first parameter of integer is each rowId and 
+	* the second parameter is the result data.
+	*/	
+	any rows;
+}
+
 /** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
 event ResultSetRow {
 	/** Unique id identifying the Statement that this is in response to */
