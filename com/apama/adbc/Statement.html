@@ -45,7 +45,7 @@
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event Statement</H2>
-<HR>Execute an SQL statement<HR>
+<HR>Execute an SQL statement, which may be a query (resulting some results)<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -74,7 +74,7 @@
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;any&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#parameters">parameters</A></B></CODE>
 <br>
-<br>Parameters for prepared statement</TD>
+<br>Parameters for prepared statement.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -93,7 +93,9 @@
 <A NAME="parameters"></A>
 <H3>parameters</H3>
 <PRE>sequence&lt;any&gt;&nbsp;<B>parameters</B>
-</PRE>Parameters for prepared statement<HR>
+</PRE>Parameters for prepared statement.<br>
+<br> If any parameters are provided, the SQL is sent to the database as a prepared statement allowing for fast repeated execution.<br>
+<br> If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker for single uses (and slower for repeated uses), but you need to be extremely careful to validate and escape any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if .<HR>
 <A NAME="smallResultSet"></A>
 <H3>smallResultSet</H3>
 <PRE>boolean&nbsp;<B>smallResultSet</B>

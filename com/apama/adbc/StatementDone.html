@@ -45,7 +45,7 @@
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event StatementDone</H2>
-<HR>Response to Statement<HR>
+<HR>Sent when a statement has finished executing, either successfully or unsuccessfully.<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -64,7 +64,7 @@
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;optional&lt;string&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="StatementDone.html#error">error</A></B></CODE>
 <br>
-</TD>
+<br>Empty string if it completed successfully, or an error message if it did not.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -75,8 +75,7 @@
 <A NAME="error"></A>
 <H3>error</H3>
 <PRE>optional&lt;string&gt;&nbsp;<B>error</B>
-</PRE>
-<HR>
+</PRE>Empty string if it completed successfully, or an error message if it did not.<HR>
 <A NAME="messageId"></A>
 <H3>messageId</H3>
 <PRE>integer&nbsp;<B>messageId</B>
