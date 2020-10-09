@@ -57,6 +57,16 @@
 <br>Unique id identifying this Statement</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;boolean</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#smallResultSet">smallResultSet</A></B></CODE>
+<br>
+<br>Indicate if the resultSet is expected to be small. If its small it will be returned in one SmallResultsSet event rather than individual ResultSetRows.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#maxSmallQuerySize">maxSmallQuerySize</A></B></CODE>
+<br>
+<br>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="Statement.html#sql">sql</A></B></CODE>
 <br>
 <br>SQL to run</TD>
@@ -72,6 +82,10 @@
 <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Member detail</B></FONT></TH>
 </TR>
 </TABLE>
+<A NAME="maxSmallQuerySize"></A>
+<H3>maxSmallQuerySize</H3>
+<PRE>integer&nbsp;<B>maxSmallQuerySize</B>
+</PRE>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.<HR>
 <A NAME="messageId"></A>
 <H3>messageId</H3>
 <PRE>integer&nbsp;<B>messageId</B>
@@ -80,6 +94,10 @@
 <H3>parameters</H3>
 <PRE>sequence&lt;any&gt;&nbsp;<B>parameters</B>
 </PRE>Parameters for prepared statement<HR>
+<A NAME="smallResultSet"></A>
+<H3>smallResultSet</H3>
+<PRE>boolean&nbsp;<B>smallResultSet</B>
+</PRE>Indicate if the resultSet is expected to be small. If its small it will be returned in one SmallResultsSet event rather than individual ResultSetRows.<HR>
 <A NAME="sql"></A>
 <H3>sql</H3>
 <PRE>string&nbsp;<B>sql</B>

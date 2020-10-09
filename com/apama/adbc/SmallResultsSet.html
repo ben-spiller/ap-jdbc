@@ -45,7 +45,7 @@
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event SmallResultsSet</H2>
-<HR>Returned for small ResultSets if the executed statement is expected to return a small set of results, Then they are all returned at once in this event rather thans individually in separate ResultSetRows.<HR>
+<HR>Returned for small ResultSets if the executed statement is expected to return a small set of results, Then they are all returned at once in this event rather than individually in separate ResultSetRows.<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -57,9 +57,9 @@
 <br>Unique id identifying the Statement that this is in response to</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;any</CODE></FONT></TD><TD><CODE><B><A HREF="SmallResultsSet.html#rows">rows</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;dictionary&lt;string,&nbsp;any&gt;&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="SmallResultsSet.html#rows">rows</A></B></CODE>
 <br>
-<br>The result data. Thsi is expected to contain multiple Rows so will be of the form dictonary<integer, dictionary <string, any> row> Where the first parameter of integer is each rowId and the second parameter is the result data.</TD>
+<br>The result data. This is expected to contain a sequence of multiple rows where each dictionary element contains a rows result data.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -73,8 +73,8 @@
 </PRE>Unique id identifying the Statement that this is in response to<HR>
 <A NAME="rows"></A>
 <H3>rows</H3>
-<PRE>any&nbsp;<B>rows</B>
-</PRE>The result data. Thsi is expected to contain multiple Rows so will be of the form dictonary<integer, dictionary <string, any> row> Where the first parameter of integer is each rowId and the second parameter is the result data.<HR>
+<PRE>sequence&lt;dictionary&lt;string,&nbsp;any&gt;&gt;&nbsp;<B>rows</B>
+</PRE>The result data. This is expected to contain a sequence of multiple rows where each dictionary element contains a rows result data.<HR>
 <HR>
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
