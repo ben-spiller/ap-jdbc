@@ -45,7 +45,7 @@
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event SmallStatement</H2>
-<HR>Execute an SQL statement, which is expected to have a small number of results .<br>
+<HR>Execute an SQL statement, which is expected to have a small number of results that should be returned in a single event.<br>
 <br> In this scenario you shoudl expect all results to be returned in one SmallResultsSet event rather than individual ResultSetRows.<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -60,7 +60,7 @@
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SmallStatement.html#maxSmallQuerySize">maxSmallQuerySize</A></B></CODE>
 <br>
-<br>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.</TD>
+<br>Indicate the max rows allowed. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -71,7 +71,7 @@
 <A NAME="maxSmallQuerySize"></A>
 <H3>maxSmallQuerySize</H3>
 <PRE>integer&nbsp;<B>maxSmallQuerySize</B>
-</PRE>Indicate the max results allowed if this is a smallResultSet. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.<HR>
+</PRE>Indicate the max rows allowed. If it turns out there were more results than expected, only the amount up to maxSmallQuerySize will be returned and the statement is stopped after that.<HR>
 <A NAME="statement"></A>
 <H3>statement</H3>
 <PRE>
