@@ -146,6 +146,6 @@ event SQLStatementDone {
 	integer updateCount;
 
 	/** Empty string if it completed successfully, or an error message if it did not. */
-	optional<string> error; // TODO: change to a simple string, since can't match on it if use optional
+	string error; // TODO: change to a simple string, since can't match on it if use optional
 
 }
