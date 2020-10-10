@@ -19,7 +19,7 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 		
 		correlator.injectEPL("test.mon")
 		correlator.flush()
-		self.waitForGrep('correlator.log', 'SQLStatementDone\(', condition='==4',
+		self.waitForGrep('correlator.log', 'SQLStatementDone\(', condition='==5',
 			process=correlator.process, errorExpr=[' (ERROR|FATAL|WARN) .*'])
 		
 		
@@ -28,6 +28,7 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 		
 		self.logFileContents('correlator.log', includes=['ResultSetRow\(.*'])
 
-		self.assertLineCount('correlator.log', expr='ResultSetRow\(', condition='==2')
-		self.assertGrep('correlator.log', expr='ResultSetRow\(4,0,.*42\)')
-		self.assertGrep('correlator.log', expr='ResultSetRow\(4,1,.*-2\)')
+		# TODO: add more detailed checks of what was committed 
+		self.assertGrep('correlator.log', expr='ResultSetRow\(.*,200')
+		self.assertGrep('correlator.log', expr='ResultSetRow\(.*,1000')
+		self.assertGrep('correlator.log', expr='ResultSetRow\(.*,3000')

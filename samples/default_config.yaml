@@ -10,15 +10,21 @@ plugins:
         class: DiagnosticCodec
 
 startChains:
+    # Each JDBC chain provides a single JDBC connection, and so allows one statement to be executed at a time
+
+
+    # NB: this is the main chain used in the 2020Oct IW
     JDBC:
         - apama.eventMap:
             allowMissing: true
-#        - mapperCodec:
+        - diagnosticCodec
         - JDBCTransport:
+            autoCommit: true
             jdbcURL: ${jdbc.url}
             jdbcUser: ${jdbc.user}
             jdbcPassword: ${jdbc.password}
 
+    # Chains from previous IWs
     storeEvents:
         - apama.eventMap:
         - mapperCodec:

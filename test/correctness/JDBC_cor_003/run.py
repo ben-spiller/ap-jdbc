@@ -17,18 +17,19 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 		
 		correlator.injectEPL("test.mon")
 		correlator.flush()
-		self.waitForGrep('correlator.log', 'com.apama.adbc.StatementDone\(', condition='==5')
-		
+		self.waitForGrep('correlator.log', 'com.apama.adbc.SQLStatementDone\(', condition='==5',
+			process=correlator.process, errorExpr=[' (ERROR|FATAL|WARN) .*'])
+
 	def validate(self):
 		self.assertGrep('correlator.log', expr=' (ERROR|FATAL) .*', contains=False)
 		# Query results
 		self.assertOrderedGrep('correlator.log', exprList=[
 			"com.apama.adbc.ResultSetRow\(5,0.*42\)",
 			"com.apama.adbc.ResultSetRow\(5,1.*100\)",
-			"com.apama.adbc.StatementDone\(5,-1,",])
+			"com.apama.adbc.SQLStatementDone\(5,-1,",])
 		# Insert results
 		self.assertOrderedGrep('correlator.log', exprList=[
-			"com.apama.adbc.StatementDone\(1,0,",
-			"com.apama.adbc.StatementDone\(2,1,",
-			"com.apama.adbc.StatementDone\(3,1,",
-			"com.apama.adbc.StatementDone\(4,1,",])
+			"com.apama.adbc.SQLStatementDone\(1,0,",
+			"com.apama.adbc.SQLStatementDone\(2,1,",
+			"com.apama.adbc.SQLStatementDone\(3,1,",
+			"com.apama.adbc.SQLStatementDone\(4,1,",])

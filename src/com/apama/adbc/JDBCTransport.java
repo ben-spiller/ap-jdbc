@@ -39,6 +39,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	/** How often to automatically commit the connection. Set to 0 to disable. 
 	 * This is usually more performant than the "autoCommit" JDBC feature which does it after every statement. */
 	final float periodicCommitIntervalSecs; 
+	/** The JDBC autoCommit feature */
+	final boolean autoCommit; 
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public JDBCTransport(org.slf4j.Logger logger, TransportConstructorParameters params) throws Exception 
@@ -59,7 +61,9 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		jdbcUser = config.getStringDisallowEmpty("jdbcUser", null);
 		jdbcPassword = config.getStringDisallowEmpty("jdbcPassword", "");
 
-		periodicCommitIntervalSecs = config.get("periodicCommitIntervalSecs", 5.0f);
+		autoCommit = config.get("autoCommit", true);
+		periodicCommitIntervalSecs = config.get("periodicCommitIntervalSecs", 0);
+		if (autoCommit && periodicCommitIntervalSecs>0) throw new IllegalArgumentException("Cannot enable both autoCommit and periodicCommitIntervalSecs");
 		
 		jndiEnvironment = new Hashtable(config.getMap("jndiEnvironment", true).getUnderlyingMap());
 
@@ -96,11 +100,12 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	
 	public void start() throws Exception {
 		jdbcConn = createConnection();
-		jdbcConn.setAutoCommit(false);
+		jdbcConn.setAutoCommit(autoCommit);
+		logger.info("Connected to JDBC "+jdbcConn+" with autoCommit="+autoCommit);
 		//make sure the connection is valid
 		boolean goodConn = jdbcConn.isValid(5); //will throw if this fails
 
-		if (periodicCommitIntervalSecs >= 0)
+		if (periodicCommitIntervalSecs > 0)
 			periodicCommitThread = new ApamaThread("JDBCTransport.periodicCommitThread") {
 				@Override
 				public void call() throws InterruptedException {
@@ -127,8 +132,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		long messageId = payload.get("messageId", -1L);
 		if (eventType.equals("Store")) {
 			executeStore(messageId, payload);
-		} else if (eventType.equals("Statement")) {
-			executeStatement(payload, m, messageId);
+		} else if (eventType.equals("SQLStatement")) {
+			executeStatement(payload, m, messageId, false, -1);
 		} else if (eventType.equals("SmallStatement")) {
 			boolean smallResultSet = true;
 			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
@@ -138,41 +143,74 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 
-	// This method assumes it's not called concurrently by more than one thread
-	private void executeStatement(MapExtractor payload, Message m, long messageId) throws Exception{
-		executeStatement(payload, m, messageId, false, -1);
+	
+	private Statement configureStatement(MapExtractor payload, Statement statement) throws SQLException
+	{
+		long maxRows = payload.get("maxRows", 0L);
+		if (maxRows > 0)
+		{
+			if (maxRows > Integer.MAX_VALUE)
+				statement.setLargeMaxRows(maxRows); // not supported by all databases
+			else
+				statement.setMaxRows((int)maxRows);
+		}
+		
+		long queryTimeoutSecs = payload.get("queryTimeoutSecs", 0L);
+		if (queryTimeoutSecs > 0) statement.setQueryTimeout((int)queryTimeoutSecs);
+		
+		return statement;
 	}
+	
+	// This method assumes it's not called concurrently by more than one thread
+	private void executeStatement(MapExtractor payload, Message m, long messageId, boolean smallResultSet, long maxSmallQuerySize) 
+	{
+		Map<String, Object> statementDonePayload = new HashMap<>();
+		statementDonePayload.put("messageId", messageId);
+		statementDonePayload.put("error", "");
+		statementDonePayload.put("updateCount", 0);
+		Message statementDoneMsg = new Message(statementDonePayload);
+		statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.SQLStatementDone");
 
-	private void executeStatement(MapExtractor payload, Message m, long messageId, boolean smallResultSet, long maxSmallQuerySize) throws Exception{
+		
 		Statement stmt = null;
 		ResultSet rs = null;
-
 		try {
+			smallResultSet = smallResultSet || payload.get("resultsInOneEvent", false); // TODO: if we use the new ExecuteStatement event no need for smallResultSet/maxSmallQuerySize to be passed in separately 
+			
 			//TODO this works find for normal Statments - for Small statments sql and parameters are at the wrong level 
 			// in the payload to read them with the following, either the payload passed in needs to change or reading them for SmallStataments does.
-			String sql_string = payload.getStringDisallowEmpty("sql"); 
-			List<Object> parameters = payload.getList("parameters", Object.class, true);
-			boolean resultsAvailable;
+			List<String> sql = payload.getList("sql", String.class, false); 
+			List<MapExtractor> parameterBatches = payload.getListOfMaps("parameterBatches", true);
 
-			if (parameters.isEmpty()) {
-				stmt = jdbcConn.createStatement();
-				resultsAvailable = stmt.execute(sql_string);
-			} else {
-				PreparedStatement stmt_ = getPreparedStatement(sql_string);
-				int i = 1;
-				for(Object param : parameters) {
-					// TODO: "Not all databases allow for a non-typed Null to be sent to the backend. For maximum portability, the setNull or the setObject(int parameterIndex, Object x, int sqlType) method should be used instead of setObject(int parameterIndex, Object x)."
-					stmt_.setObject(i, param); // TODO: does this work for all valid SQL types e.g. XML, blob, etc?
-					i++;
+			if (parameterBatches.isEmpty()) // non-prepared statement
+			{
+				stmt = configureStatement(payload, jdbcConn.createStatement());
+				
+				if (sql.size() <= 1) {
+					stmt.execute(sql.get(0));
+				} else { // batch of SQL updates commands - can't be used for queries
+					for (String s: sql) 
+						stmt.addBatch(s);
+					stmt.executeBatch();
 				}
-				resultsAvailable = stmt_.execute();
-
-				stmt = stmt_;
+			} 
+			else // prepared statement with parameters
+			{
+				if (sql.size() != 1) throw new IllegalArgumentException("If providing SQL parameters there must be exactly one SQL statement string but "+sql.size()+" were provided");
+				
+				PreparedStatement pstmt = getPreparedStatement(sql.get(0));
+				stmt = configureStatement(payload, pstmt);
+				for(MapExtractor params : parameterBatches) {
+					for (Map.Entry<?,?> param: params.getUnderlyingMap().entrySet()) {
+						// TODO: "Not all databases allow for a non-typed Null to be sent to the backend. For maximum portability, the setNull or the setObject(int parameterIndex, Object x, int sqlType) method should be used instead of setObject(int parameterIndex, Object x)."
+						logger.info("setObject: "+(int)(long)(Long)param.getKey()+", "+param.getValue());
+						pstmt.setObject((int)(long)(Long)param.getKey(), param.getValue()); // TODO: does this work for all valid SQL types e.g. XML, blob, etc?
+					}
+					pstmt.execute();
+				}
 			}
 
-			if(resultsAvailable) {
-				rs = stmt.getResultSet();
-			}
+			rs = stmt.getResultSet(); // returns null if None
 
 			List<Message> msgList = new ArrayList<>();
 			List<Map <String, Object>> rowList = new ArrayList<>();
@@ -191,7 +229,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					
 					if (smallResultSet == true){
 						rowList.add(rowMap);
-						if (rowList.size() >= maxSmallQuerySize){
+						if (rowList.size() >= maxSmallQuerySize){ // TODO: probably this check isn't needed due to setMaxRows()?
+
 							//send back a new event containing all rows
 							Map<String, Object> smallResultPayload = new HashMap<>();
 							smallResultPayload.put("messageId", messageId);
@@ -245,15 +284,12 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			}
 
 			// Respond with StatementDone
-			Map<String, Object> statementDonePayload = new HashMap<>();
-			statementDonePayload.put("messageId", messageId);
 			statementDonePayload.put("updateCount", stmt.getUpdateCount());
-			Message statementDoneMsg = new Message(statementDonePayload);
-			statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.StatementDone");
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 		} 
+		/*
 		catch (SQLTransientException e){
-			/*//if this is a transient exception then we should retry it to see if it will just worked
+			//if this is a transient exception then we should retry it to see if it will just worked
 			
 			//if currentRetryCount is 0 coming into this catch then uts the first times its failed
 			if (currentRetryCount == 0){ 
@@ -274,29 +310,24 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			else{
 				logger.warn("Statement execution failed nd has been retried a maximum number of times - " + sql_string + " (" + parameters +")");
 				// Throw exception and send statementDone/uery Done - back to use with the failure
-			}*/
+			}
 			
 		}
 		catch (SQLNonTransientException e){
 			//If its a non transient exception then it wont 'just work' unless the cause is corrected
-		}
+		}*/
 		catch (SQLException ex) {
-			/**
+			logger.warn("Failed to execute query due to: "+ex+" - query is "+payload+": "); // TODO: remove later, but useful during dev
 			String message = getSQLExceptionMessage(ex, "Error executing query");
-			
-			//Send QueryDone with errormsg
-			Map<String, Object> queryDonePayload = new HashMap<>();
-			queryDonePayload.put("messageId", messageId);
-			queryDonePayload.put("errorMessage", message);
-			queryDonePayload.put("eventCount", msgList.size());
-			queryDonePayload.put("lastEventTime", lastEventTime);
-			Message queryDoneMsg = new Message(queryDonePayload);
-			queryDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.QueryDone");
 
-			hostSide.sendBatchTowardsHost(Collections.singletonList(queryDoneMsg));
+			statementDonePayload.put("error", message);
+			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 
-			throw new Exception(message);//, db.isDisconnected(con));
-			*/
+			throw new RuntimeException(message, ex);//, db.isDisconnected(con));
+		} catch (RuntimeException e)
+		{
+			// TODO: better error handling here too
+			logger.warn("Failed to execute query "+payload+": ", e);
 		}
 		finally {
 			tryElseWarn(rs,  x->x.close(), "Could not close ResultSet object for "+stmt+": ");
@@ -533,7 +564,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			ApamaThread.cancelAndJoin(5000, true,  periodicCommitThread);
 		
 		if (jdbcConn != null) {
-			if (periodicCommitThread != null)
+			if (periodicCommitThread != null && !autoCommit)
 				tryElseWarn(() -> jdbcConn.commit(), "Could not perform a final commit on the JDBC connection: ");
 			
 			tryElseWarn(() -> jdbcConn.close(), "Could not close the JDBC connection: ");
@@ -551,6 +582,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			ret = jdbcConn.prepareStatement(sql);
 			previousPreparedStatements.put(sql, ret);
 		}
+		// TODO: use a java class that is a LRU cache and close() prepared statements when evicted 
 		return ret;
 	}
 

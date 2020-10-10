@@ -42,51 +42,69 @@ event Store {
 	dictionary<string, any> row;
 }
 
+/** Send this event to the JDBC connectivity plugin to execute a JDBC Statement (or PreparedStatement).
 
-/** Execute an SQL statement, which may be a query (returning a set of results) or an update command.
-
-This will be executed as a prepared statement if one or more parameters are provided. 
+This can be used for both queries and update commands. 
 */
-event Statement {
-	/** Unique id identifying this request */
+event SQLStatement 
+{
+	// TODO: mark these private so users only interact with them with the EPL actions 
 	integer messageId;
+	sequence<string> sql;
+	sequence<dictionary<integer, any>> parameterBatches;
+	dictionary<string, any> extraParams; 
+	
+	// Static constructors
+	
+	/** Execute a single SQL query or update command. 
+	
+	@param parameters Parameters for "?" placeholders if the sql is to be sent to the database as a prepared statement 
+		(which provides protection against SQL injection attacks and faster execution if the query will be repeated later. 
+		
+		If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker 
+		for single use (and slower for repeated uses), but you need to be extremely careful to validate and escape 
+		any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if in doubt specify 
+		your parameters here rather than manually constructing a SQL string. 
+	*/
+	static action simple(string sql, sequence<any> parameters) returns SQLStatement
+	{
+		return SQLStatement(integer.incrementCounter("jdbc"), [sql], __paramsToDictSingletonList(parameters), new dictionary<string, any>);
+	}
 
-	/** SQL to execute. 
-	Be sure to strictly validate and escape any user-provided strings included in the SQL 
-	to avoid the risk of SQL injection vulnerabilities. 
+	static action commandBatch(sequence<string> sql) returns SQLStatement
+	{
+		return SQLStatement(integer.incrementCounter("jdbc"), sql, new sequence<dictionary<integer, any>>, new dictionary<string, any>);
+	}
+
+	static action parameterBatch(string sql, sequence<dictionary<integer, any>> parameterBatches) returns SQLStatement
+	{
+		return SQLStatement(integer.incrementCounter("jdbc"), [sql], parameterBatches, new dictionary<string, any>);
+	}
 	
-	Alternatively, specify parameters using "?" syntax (which will safely escape them and also result in a prepared statement 
-	being used on the database server).  
-	*/
-	string sql;
+	static action __paramsToDictSingletonList(sequence<any> parameters) returns sequence<dictionary<integer, any>>
+	{
+		if (parameters.size() = 0) { return new sequence<dictionary<integer, any>>; }
+		dictionary<integer, any> result := new dictionary<integer, any>; 
+		integer i := 0;
+		while (i < parameters.size())
+		{
+			result[i+1] := parameters[i];
+			i := i+1;
+		}
+		return [result];
+	}
 	
-	/** Parameters for prepared statement. 
+	// Methods for fluent builder API 
 	
-	If any parameters are provided, the SQL is sent to the database as a prepared statement allowing for 
-	fast repeated execution. 
-	
-	If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker 
-	for single uses (and slower for repeated uses), but you need to be extremely careful to validate and escape 
-	any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if . 
-	*/
-	sequence<any> parameters;
+	/** Results all results in a single SmallResultsSet instead of one XXX event per row. 
+	It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended. */
+	action withResultsInOneEvent(integer maxRows) returns SQLStatement { extraParams["resultsInOneEvent"] := true; return setMaxRows(maxRows); }
+
+	action setMaxRows(integer v) returns SQLStatement { extraParams["maxRows"] := v; return self; }
+	action setQueryTimeoutSecs(integer v) returns SQLStatement { extraParams["queryTimeoutSecs"] := v; return self; }
 }
 
-/** Execute an SQL statement, which is expected to have a small number of results that should be returned in a single event.
-*
-* In this scenario you shoudl expect all results to be returned in one 
-* SmallResultsSet event rather than individual ResultSetRows.
-*/
-event SmallStatement {
-	/** Details of the statement to be executed. */
-	Statement statement;
-	
-	/** Indicate the max rows allowed.
-	* If it turns out there were more results than expected, only the amount up 
-	* to maxSmallQuerySize will be returned and the statement is stopped after that.
-	*/
-	integer maxSmallQuerySize;	
-}
+
 
 /** Returned for small ResultSets
 * if the executed statement is expected to return a small set of results,
@@ -102,6 +120,8 @@ event SmallResultsSet{
 	* each dictionary element contains a rows result data.
 	*/	
 	sequence<dictionary<string,any>> rows;
+	
+	string error; // TODO: populate this so there's no need to listen for StatementDone
 }
 
 /** Individual row from a ResultSet. Zero or more are sent in response to a Statement. */
@@ -118,7 +138,7 @@ event ResultSetRow {
 }
 
 /** Sent when a statement has finished executing, either successfully or unsuccessfully.  */
-event StatementDone {
+event SQLStatementDone {
 	/** Unique id identifying the request. */
 	integer messageId;
 

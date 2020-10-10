@@ -1,31 +1,27 @@
-using com.apama.adbc.Statement;
+using com.apama.adbc.SQLStatement;
+using com.apama.adbc.SQLStatementDone;
 using com.apama.adbc.ResultSetRow;
-using com.apama.adbc.StatementDone;
 
 monitor Test {
 	action onload() {
-		Statement stmt := new Statement;
+		send SQLStatement.simple("CREATE TABLE myTable(myColumn int);", new sequence<any>) to "JDBC";
 
-		stmt.messageId := 1;
-		stmt.sql := "CREATE TABLE myTable(myColumn int);";
-		send stmt to "JDBC";
+		// NB: these will all use the same PreparedStatement since they have the same SQL
+		send SQLStatement.simple("INSERT INTO myTable VALUES(?);", [any(integer, 42)])
+			.setQueryTimeoutSecs(60) to "JDBC";
 
-		stmt.messageId := 2;
-		stmt.sql := "INSERT INTO myTable VALUES(?);";
-		stmt.parameters := [42];
-		send stmt to "JDBC";
+		send SQLStatement.simple("INSERT INTO myTable VALUES(?);", [any(integer, -2)]) to "JDBC";
 
-		stmt.messageId := 3;
-		stmt.parameters := [-2];
-		send stmt to "JDBC";
+		SQLStatement s := SQLStatement.simple("SELECT * FROM myTable WHERE myColumn > ?;", [any(integer, -100)]);
+		send s to "JDBC";
 
-		stmt.messageId := 4;
-		stmt.sql := "SELECT * FROM myTable;";
-		stmt.parameters := [];
-		send stmt to "JDBC";
-
-		on all ResultSetRow(messageId=4) as row {
+		on all ResultSetRow(messageId=s.messageId) as row {
 			log row.toString() at INFO;
+		}
+
+		on all SQLStatementDone() as sd {
+			log sd.toString();
 		}
 	}
 }
+
