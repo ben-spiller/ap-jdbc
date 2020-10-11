@@ -24,7 +24,7 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 		
 		
 	def validate(self):
-		self.assertGrep('correlator.log', expr=' (ERROR|FATAL|WARN) .*', contains=False)
+		self.assertGrep('correlator.log', expr=' (ERROR |FATAL |WARN .*JDBC).*', contains=False)
 		
 		self.logFileContents('correlator.log', includes=['ResultSetRow\(.*'])
 
