@@ -3,12 +3,12 @@
 
 <HEAD>
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<TITLE>SQLStatementDone</TITLE>
-<META NAME="keywords" CONTENT="SQLStatementDone&nbsp;event">
+<TITLE>SQLErrorDetails</TITLE>
+<META NAME="keywords" CONTENT="SQLErrorDetails&nbsp;event">
 <LINK REL="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style">
 <SCRIPT type="text/javascript">function windowTitle()
           {
-          parent.document.title="SQLStatementDone";
+          parent.document.title="SQLErrorDetails";
           }
           </SCRIPT>
 <NOSCRIPT></NOSCRIPT>
@@ -16,9 +16,9 @@
 <BODY BGCOLOR="white" onload="windowTitle();">
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
-<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLStatementDone.html"><B>FRAMES</B></A>  &nbsp;
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLErrorDetails.html"><B>FRAMES</B></A>  &nbsp;
 
-            &nbsp;<A target="_top" HREF="SQLStatementDone.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<A target="_top" HREF="SQLErrorDetails.html"><B>NO FRAMES</B></A>  &nbsp;
             &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
 <NOSCRIPT>
 <A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>
@@ -44,32 +44,42 @@
 <HR>
 <H2>
 <FONT SIZE="-1">com.apama.adbc</FONT>
-<BR>Event SQLStatementDone</H2>
-<HR>Sent when a statement has finished executing, either successfully or unsuccessfully.<HR>
+<BR>Event SQLErrorDetails</H2>
+<HR>Holds detailed information about an error. Included inside events such as SQLStatementDone.<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
 <TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2"><B>Member summary</B></FONT></TH>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatementDone.html#messageId">messageId</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#message">message</A></B></CODE>
 <br>
-<br>Unique id identifying the request.</TD>
+</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatementDone.html#rows">rows</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#javaExceptionClass">javaExceptionClass</A></B></CODE>
 <br>
-<br>Number of rows successfully returned (for queries) or updated (for update statements). Zero if nothing was done. This is especially useful for detecting if there was an error that partially completed before it failed.</TD>
+</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;boolean</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatementDone.html#error">error</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;boolean</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#isTransientOrRecoverable">isTransientOrRecoverable</A></B></CODE>
 <br>
-<br>True if there was a partial or complete failure (note that some results may have been returned/rows updates - see "rows" to find out).</TD>
+<br>Can be used to determine whether the statement might succeed if retried (note that when this is true the connection is automatically closed and reopened before the next statement is executed).</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
-<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;optional&lt;<A HREF="../../../com/apama/adbc/SQLErrorDetails.html" title="type in com.apama.adbc">com.apama.adbc.SQLErrorDetails</A>&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatementDone.html#errorDetails">errorDetails</A></B></CODE>
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#vendorErrorCode">vendorErrorCode</A></B></CODE>
 <br>
-<br>Provides access to details such as the "message" and "isTransientOrRecoverable". Use an ifpresent statement to detect if there was an error and to extract the details.</TD>
+<br>The original request that caused this error, in case you wish to immediate retry it.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;string</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#sqlState">sqlState</A></B></CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;any</CODE></FONT></TD><TD><CODE><B><A HREF="SQLErrorDetails.html#request">request</A></B></CODE>
+<br>
+</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -77,28 +87,40 @@
 <TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Member detail</B></FONT></TH>
 </TR>
 </TABLE>
-<A NAME="error"></A>
-<H3>error</H3>
-<PRE>boolean&nbsp;<B>error</B>
-</PRE>True if there was a partial or complete failure (note that some results may have been returned/rows updates - see "rows" to find out).<HR>
-<A NAME="errorDetails"></A>
-<H3>errorDetails</H3>
-<PRE>optional&lt;<A HREF="../../../com/apama/adbc/SQLErrorDetails.html" title="type in com.apama.adbc">com.apama.adbc.SQLErrorDetails</A>&gt;&nbsp;<B>errorDetails</B>
-</PRE>Provides access to details such as the "message" and "isTransientOrRecoverable". Use an ifpresent statement to detect if there was an error and to extract the details.<HR>
-<A NAME="messageId"></A>
-<H3>messageId</H3>
-<PRE>integer&nbsp;<B>messageId</B>
-</PRE>Unique id identifying the request.<HR>
-<A NAME="rows"></A>
-<H3>rows</H3>
-<PRE>integer&nbsp;<B>rows</B>
-</PRE>Number of rows successfully returned (for queries) or updated (for update statements). Zero if nothing was done. This is especially useful for detecting if there was an error that partially completed before it failed.<HR>
+<A NAME="isTransientOrRecoverable"></A>
+<H3>isTransientOrRecoverable</H3>
+<PRE>boolean&nbsp;<B>isTransientOrRecoverable</B>
+</PRE>Can be used to determine whether the statement might succeed if retried (note that when this is true the connection is automatically closed and reopened before the next statement is executed).<HR>
+<A NAME="javaExceptionClass"></A>
+<H3>javaExceptionClass</H3>
+<PRE>string&nbsp;<B>javaExceptionClass</B>
+</PRE>
+<HR>
+<A NAME="message"></A>
+<H3>message</H3>
+<PRE>string&nbsp;<B>message</B>
+</PRE>
+<HR>
+<A NAME="request"></A>
+<H3>request</H3>
+<PRE>any&nbsp;<B>request</B>
+</PRE>
+<HR>
+<A NAME="sqlState"></A>
+<H3>sqlState</H3>
+<PRE>string&nbsp;<B>sqlState</B>
+</PRE>
+<HR>
+<A NAME="vendorErrorCode"></A>
+<H3>vendorErrorCode</H3>
+<PRE>integer&nbsp;<B>vendorErrorCode</B>
+</PRE>The original request that caused this error, in case you wish to immediate retry it.<HR>
 <HR>
 <TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
 <TR>
-<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLStatementDone.html"><B>FRAMES</B></A>  &nbsp;
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLErrorDetails.html"><B>FRAMES</B></A>  &nbsp;
 
-            &nbsp;<A target="_top" HREF="SQLStatementDone.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<A target="_top" HREF="SQLErrorDetails.html"><B>NO FRAMES</B></A>  &nbsp;
             &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
 <NOSCRIPT>
 <A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>

@@ -46,7 +46,14 @@
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event SQLStatement</H2>
 <HR>Send this event to the JDBC connectivity plugin to execute a JDBC Statement (or PreparedStatement).<br>
-<br> This can be used for both queries and update commands.<HR>
+<br> This can be used for both queries and update commands.<DL>
+<DT>
+<B>Sends:</B>
+</DT>
+<DD>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;-&nbsp;</DD>
+</DL>
+<HR>
 <A NAME="member_summary"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
 <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
@@ -89,6 +96,11 @@
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE>static </CODE><CODE><B><A HREF="SQLStatement.html#parameterBatch()">parameterBatch</A></B>(string&nbsp;sql,&nbsp;sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;&nbsp;parameterBatches)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#sendTo()">sendTo</A></B>(string&nbsp;channel)</CODE>
 <br>
 </TD>
 </TR>
@@ -183,6 +195,26 @@
 <DD>
 <tt>parameterBatches</tt>
 </DD>
+</DL>
+<HR>
+<A NAME="sendTo()"></A>
+<H3>sendTo</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>sendTo</B>(string&nbsp;channel)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>channel</tt>
+</DD>
+</DL>
+<DL>
+<DT>
+<B>Sends:</B>
+</DT>
+<DD>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;-&nbsp;</DD>
 </DL>
 <HR>
 <A NAME="setMaxRows()"></A>
