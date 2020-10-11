@@ -1,0 +1,273 @@
+<HTML><!-- saved from url=(0014)about:internet -->
+
+
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<TITLE>SQLStatement</TITLE>
+<META NAME="keywords" CONTENT="SQLStatement&nbsp;event">
+<LINK REL="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style">
+<SCRIPT type="text/javascript">function windowTitle()
+          {
+          parent.document.title="SQLStatement";
+          }
+          </SCRIPT>
+<NOSCRIPT></NOSCRIPT>
+</HEAD>
+<BODY BGCOLOR="white" onload="windowTitle();">
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLStatement.html"><B>FRAMES</B></A>  &nbsp;
+
+            &nbsp;<A target="_top" HREF="SQLStatement.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
+<NOSCRIPT>
+<A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+</FONT></TD>
+</TR>
+<TR>
+<TD COLSPAN="2" BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+<TR ALIGN="center" VALIGN="top">
+<TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;
+              </TD><TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1"><A HREF="../../..//com/apama/adbc/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A></TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;
+              </TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT>&nbsp;
+                </A></TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1" WIDTH="100%" ALIGN="RIGHT"></TD>
+</TR>
+</TABLE>
+</TD><TD ALIGN="right" VALIGN="top" ROWSPAN="3"><EM></EM></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">SUMMARY:&nbsp;IMPORT&nbsp;|&nbsp;CONSTANT&nbsp;|&nbsp;<A HREF="#member_summary">MEMBER</A>&nbsp;|&nbsp;<A HREF="#action_summary">ACTION</A></FONT></TD><TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">DETAIL:&nbsp;IMPORT&nbsp;|&nbsp;CONSTANT&nbsp;|&nbsp;<A HREF="#member_detail">MEMBER</A>&nbsp;|&nbsp;<A HREF="#action_detail">ACTION</A></FONT></TD>
+</TR>
+</TABLE>
+<HR>
+<H2>
+<FONT SIZE="-1">com.apama.adbc</FONT>
+<BR>Event SQLStatement</H2>
+<HR>Send this event to the JDBC connectivity plugin to execute a JDBC Statement (or PreparedStatement).<br>
+<br> This can be used for both queries and update commands.<HR>
+<A NAME="member_summary"></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2"><B>Member summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;integer</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatement.html#messageId">messageId</A></B></CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;string&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatement.html#sql">sql</A></B></CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatement.html#parameterBatches">parameterBatches</A></B></CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;dictionary&lt;string,&nbsp;any&gt;</CODE></FONT></TD><TD><CODE><B><A HREF="SQLStatement.html#extraParams">extraParams</A></B></CODE>
+<br>
+</TD>
+</TR>
+</TABLE>&nbsp;<A NAME="action_summary"></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2"><B>Action summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;</CODE></FONT></TD><TD><CODE>static </CODE><CODE><B><A HREF="SQLStatement.html#__paramsToDictSingletonList()">__paramsToDictSingletonList</A></B>(sequence&lt;any&gt;&nbsp;parameters)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE>static </CODE><CODE><B><A HREF="SQLStatement.html#commandBatch()">commandBatch</A></B>(sequence&lt;string&gt;&nbsp;sql)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE>static </CODE><CODE><B><A HREF="SQLStatement.html#parameterBatch()">parameterBatch</A></B>(string&nbsp;sql,&nbsp;sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;&nbsp;parameterBatches)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#setMaxRows()">setMaxRows</A></B>(integer&nbsp;v)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#setQueryTimeoutSecs()">setQueryTimeoutSecs</A></B>(integer&nbsp;v)</CODE>
+<br>
+</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE>static </CODE><CODE><B><A HREF="SQLStatement.html#simple()">simple</A></B>(string&nbsp;sql,&nbsp;sequence&lt;any&gt;&nbsp;parameters)</CODE>
+<br>
+<br>Execute a single SQL query or update command.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#withResultsInOneEvent()">withResultsInOneEvent</A></B>(integer&nbsp;maxRows)</CODE>
+<br>
+<br>Results all results in a single SmallResultsSet instead of one XXX event per row. It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended.</TD>
+</TR>
+</TABLE>&nbsp;<A NAME="member_detail"></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Member detail</B></FONT></TH>
+</TR>
+</TABLE>
+<A NAME="extraParams"></A>
+<H3>extraParams</H3>
+<PRE>dictionary&lt;string,&nbsp;any&gt;&nbsp;<B>extraParams</B>
+</PRE>
+<HR>
+<A NAME="messageId"></A>
+<H3>messageId</H3>
+<PRE>integer&nbsp;<B>messageId</B>
+</PRE>
+<HR>
+<A NAME="parameterBatches"></A>
+<H3>parameterBatches</H3>
+<PRE>sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;&nbsp;<B>parameterBatches</B>
+</PRE>
+<HR>
+<A NAME="sql"></A>
+<H3>sql</H3>
+<PRE>sequence&lt;string&gt;&nbsp;<B>sql</B>
+</PRE>
+<HR>
+<A NAME="action_detail"></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2"><B>Action detail</B></FONT></TH>
+</TR>
+</TABLE>
+<A NAME="__paramsToDictSingletonList()"></A>
+<H3>__paramsToDictSingletonList</H3>
+<PRE>sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;&nbsp;static <B>__paramsToDictSingletonList</B>(sequence&lt;any&gt;&nbsp;parameters)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>parameters</tt>
+</DD>
+</DL>
+<HR>
+<A NAME="commandBatch()"></A>
+<H3>commandBatch</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;static <B>commandBatch</B>(sequence&lt;string&gt;&nbsp;sql)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>sql</tt>
+</DD>
+</DL>
+<HR>
+<A NAME="parameterBatch()"></A>
+<H3>parameterBatch</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;static <B>parameterBatch</B>(string&nbsp;sql,&nbsp;sequence&lt;dictionary&lt;integer,&nbsp;any&gt;&gt;&nbsp;parameterBatches)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>sql</tt>
+</DD>
+<DD>
+<tt>parameterBatches</tt>
+</DD>
+</DL>
+<HR>
+<A NAME="setMaxRows()"></A>
+<H3>setMaxRows</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>setMaxRows</B>(integer&nbsp;v)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>v</tt>
+</DD>
+</DL>
+<HR>
+<A NAME="setQueryTimeoutSecs()"></A>
+<H3>setQueryTimeoutSecs</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>setQueryTimeoutSecs</B>(integer&nbsp;v)</PRE>
+<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>v</tt>
+</DD>
+</DL>
+<HR>
+<A NAME="simple()"></A>
+<H3>simple</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;static <B>simple</B>(string&nbsp;sql,&nbsp;sequence&lt;any&gt;&nbsp;parameters)</PRE>Execute a single SQL query or update command.<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>sql</tt>
+</DD>
+<DD>
+<tt>parameters</tt>&nbsp;-&nbsp;Parameters for "?" placeholders if the sql is to be sent to the database as a prepared statement (which provides protection against SQL injection attacks and faster execution if the query will be repeated later.<br>
+<br> If no parameters are provided, a non-prepared statement is used. Non-prepared statements are typically quicker for single use (and slower for repeated uses), but you need to be extremely careful to validate and escape any parameters in the sql string to avoid the risk of a SQL injection security vulnerability; if in doubt specify your parameters here rather than manually constructing a SQL string.<BR>
+<BR>
+</DD>
+</DL>
+<HR>
+<A NAME="withResultsInOneEvent()"></A>
+<H3>withResultsInOneEvent</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>withResultsInOneEvent</B>(integer&nbsp;maxRows)</PRE>Results all results in a single SmallResultsSet instead of one XXX event per row. It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended.<DL>
+<DT>
+<B>Parameters:</B>
+</DT>
+<DD>
+<tt>maxRows</tt>
+</DD>
+</DL>
+<HR>
+<HR>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2"><A target="_top" HREF="../../../index.html?com/apama/adbc/SQLStatement.html"><B>FRAMES</B></A>  &nbsp;
+
+            &nbsp;<A target="_top" HREF="SQLStatement.html"><B>NO FRAMES</B></A>  &nbsp;
+            &nbsp;<SCRIPT type="text/javascript"></SCRIPT>
+<NOSCRIPT>
+<A HREF="../../../alltypes-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+</FONT></TD>
+</TR>
+<TR>
+<TD COLSPAN="2" BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+<TR ALIGN="center" VALIGN="top">
+<TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;
+              </TD><TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1"><A HREF="../../..//com/apama/adbc/package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A></TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;
+              </TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"><A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT>&nbsp;
+                </A></TD><TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1" WIDTH="100%" ALIGN="RIGHT"></TD>
+</TR>
+</TABLE>
+</TD><TD ALIGN="right" VALIGN="top" ROWSPAN="3"><EM></EM></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">SUMMARY:&nbsp;IMPORT&nbsp;|&nbsp;CONSTANT&nbsp;|&nbsp;<A HREF="#member_summary">MEMBER</A>&nbsp;|&nbsp;<A HREF="#action_summary">ACTION</A></FONT></TD><TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">DETAIL:&nbsp;IMPORT&nbsp;|&nbsp;CONSTANT&nbsp;|&nbsp;<A HREF="#member_detail">MEMBER</A>&nbsp;|&nbsp;<A HREF="#action_detail">ACTION</A></FONT></TD>
+</TR>
+</TABLE>
+<HR>
+</BODY>
+</HTML>
