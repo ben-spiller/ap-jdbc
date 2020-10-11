@@ -140,6 +140,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			logger.info("Received execute SmallStatement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
 			payload = new MapExtractor((Map)m.getPayload(), "payload.statement");
 			executeStatement(payload, m, messageId, smallResultSet, maxSmallQuerySize);
+		} else {
+			throw new RuntimeException("Unsupported event type: "+eventType);
 		}
 	}
 
@@ -175,7 +177,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		Statement stmt = null;
 		ResultSet rs = null;
 		try {
-			smallResultSet = smallResultSet || payload.get("resultsInOneEvent", false); // TODO: if we use the new ExecuteStatement event no need for smallResultSet/maxSmallQuerySize to be passed in separately 
+			smallResultSet = smallResultSet || payload.get("resultsInOneEvent", false); // TODO: if we use the new ExecuteStatement event (with maxRows) no need for smallResultSet/maxSmallQuerySize to be passed in separately 
 			
 			//TODO this works find for normal Statments - for Small statments sql and parameters are at the wrong level 
 			// in the payload to read them with the following, either the payload passed in needs to change or reading them for SmallStataments does.
@@ -327,9 +329,13 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		} catch (RuntimeException e)
 		{
 			// TODO: better error handling here too
+			statementDonePayload.put("error", e.toString());
+			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 			logger.warn("Failed to execute query "+payload+": ", e);
 		}
 		finally {
+			// TODO: maybe this is the best place to put the sendBatchTowardsHost, to ensure it always gets sent
+			
 			tryElseWarn(rs,  x->x.close(), "Could not close ResultSet object for "+stmt+": ");
 			if (!(stmt instanceof PreparedStatement)) 
 				tryElseWarn(stmt, x -> x.close(), "Could not close statement object "+stmt+": ");
