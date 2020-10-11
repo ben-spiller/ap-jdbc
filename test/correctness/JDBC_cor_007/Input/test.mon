@@ -1,0 +1,69 @@
+using com.apama.adbc.SQLStatement;
+using com.apama.adbc.SQLStatementDone;
+using com.apama.adbc.ResultSetRow;
+
+monitor Test {
+	action onload() {
+
+		// NB: TODO this is really more of a sample than a test - contains branches not exercised by the test. Will rework this "test" when productizing. 
+		
+		SQLStatement s := SQLStatement.simple("INSERT INTO nonexistentTable VALUES(123);", new sequence<any>);
+		on SQLStatementDone(messageId = s.sendTo("JDBC").messageId) as sd 
+		{
+			ifpresent sd.errorDetails as errorDetails {
+				log "Got SQLStatementDone with errorDetails: "+com.apama.json.JSONPlugin.toJSON(errorDetails);
+				
+				if (not errorDetails.isTransientOrRecoverable) {
+					log "Unrecoverable error occurred - no point retrying" at ERROR;
+				}
+				else if sd.rows > 0 {
+					log "Some rows were returned/updated before operation failed - need to decide how you want to handle this in the application EPL" at ERROR;
+				} 
+				else {
+					log "Retrying failed statement" at INFO;
+					on SQLStatementDone(messageId = s.sendTo("JDBC").messageId) as sd {
+						log "Result after retrying: "+sd.toString();
+					}
+				}
+
+			}
+			log "Got SQLStatementDone: "+sd.toString();
+		}
+		
+		// Sample logic to show how this API could be used to implement a user-defined automatic retry policy (without having to bake it into the plugin!)
+		// TODO: make the retry path work (and test it)... didn't get time for that this week!
+		on all SQLStatementDone(error=true) as sd 
+		{
+			ifpresent sd.errorDetails as errorDetails {
+
+				if errorDetails.isTransientOrRecoverable = false {
+					log "Looks like an application bug caused this failure (no point retrying): "+sd.toString() at ERROR;
+				} 
+				else 
+				{
+					if sd.rows > 0 {
+						throw com.apama.exceptions.Exception("Need some application-defined logic to cope with retrying a statement that already returned/updated some rows!", "NOT_IMPLEMENTED");
+					}
+					
+					on wait(1.0) { // maybe add a little time delay before retrying to avoid repeated failures slowing things down?; might also want to keep track of retry count somehow?
+						log "Retrying failed SQL statement: "+sd.toString() at WARN;
+						
+						// TODO: There may be a simpler way to convert an event type from an "any" field back to the event type. And this doesn't quite work yet, but you can the idea
+						// If not, we could add a helper method on SQL statement to retry
+						
+						any s := new SQLStatement;
+						dictionary<any,any> request := < dictionary<any,any> > errorDetails.request;
+						any key;
+						for key in request.keys() {
+							s.setEntry(key, request[key]);
+						}
+						
+						s.setEntry("messageId", integer.incrementCounter("jdbc")); // best to send it with a new id, though it wouldn't actually do any harm if we didn't
+						send s to "jdbc";
+					}
+				}
+			}
+		}
+	}
+}
+

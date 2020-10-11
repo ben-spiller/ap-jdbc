@@ -22,14 +22,15 @@ class PySysTest(apamajdbc.testplugin.ApamaJDBCBaseTest):
 
 	def validate(self):
 		self.assertGrep('correlator.log', expr=' (ERROR|FATAL) .*', contains=False)
+		# TODO: hardcoding the event strings is brittle; rewrite this using the Apama 10.7 JSON event validation mechanism
 		# Query results
 		self.assertOrderedGrep('correlator.log', exprList=[
 			"com.apama.adbc.ResultSetRow\(5,0.*42\)",
 			"com.apama.adbc.ResultSetRow\(5,1.*100\)",
-			"com.apama.adbc.SQLStatementDone\(5,-1,",])
+			"com.apama.adbc.SQLStatementDone\(5,1,false,optional\(\)\)"]) # query succeeds and returns 1 row 
 		# Insert results
 		self.assertOrderedGrep('correlator.log', exprList=[
-			"com.apama.adbc.SQLStatementDone\(1,0,",
-			"com.apama.adbc.SQLStatementDone\(2,1,",
+			"com.apama.adbc.SQLStatementDone\(1,0,", #1 modifies no rows
+			"com.apama.adbc.SQLStatementDone\(2,1,", #2 modifies 1 row
 			"com.apama.adbc.SQLStatementDone\(3,1,",
 			"com.apama.adbc.SQLStatementDone\(4,1,",])

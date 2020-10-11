@@ -102,6 +102,9 @@ event SQLStatement
 
 	action setMaxRows(integer v) returns SQLStatement { extraParams["maxRows"] := v; return self; }
 	action setQueryTimeoutSecs(integer v) returns SQLStatement { extraParams["queryTimeoutSecs"] := v; return self; }
+	
+	// Providing send as a fluent method allows us to send and listen for the messageId in a consie one-liner
+	action sendTo(string channel) returns SQLStatement { send self to channel; return self; }
 }
 
 
@@ -137,15 +140,41 @@ event ResultSetRow {
 	dictionary <string, any> row;
 }
 
-/** Sent when a statement has finished executing, either successfully or unsuccessfully.  */
-event SQLStatementDone {
+/** Holds detailed information about an error. Included inside events such as SQLStatementDone.
+*/
+event SQLErrorDetails
+{
+	string message;
+	string javaExceptionClass;
+	/** 
+	Can be used to determine whether the statement might succeed if retried (note that when this is true the 
+	connection is automatically closed and reopened before the next statement is executed). 
+	*/
+	boolean isTransientOrRecoverable;
+	/** The original request that caused this error, in case you wish to immediate retry it.*/
+	
+	integer vendorErrorCode;
+	string sqlState;
+	
+	any request;
+}
+
+/** Sent when a statement has finished executing, either successfully or unsuccessfully. 
+*/
+event SQLStatementDone 
+{
 	/** Unique id identifying the request. */
 	integer messageId;
 
-	/** Number of rows updated by the Statement */
-	integer updateCount;
+	/** Number of rows successfully returned (for queries) or updated (for update statements). Zero if nothing was done. 
+	This is especially useful for detecting if there was an error that partially completed before it failed. */
+	integer rows;
 
-	/** Empty string if it completed successfully, or an error message if it did not. */
-	string error; // TODO: change to a simple string, since can't match on it if use optional
+	/** True if there was a partial or complete failure (note that some results may have been returned/rows updates - see "rows" to find out). */
+	boolean error; 
 
+	/** Provides access to details such as the "message" and "isTransientOrRecoverable". 
+	Use an ifpresent statement to detect if there was an error and to extract the details. 
+	*/
+	optional<SQLErrorDetails> errorDetails;
 }

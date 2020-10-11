@@ -13,20 +13,76 @@ import java.sql.*;
 import java.util.Map;
 
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import java.util.ArrayList;
 import java.lang.Thread;
+
+import com.apama.util.ExceptionUtil;
 import com.apama.util.concurrent.ApamaThread;
+import com.apama.util.concurrent.UncheckedUtils;
 
 /**
  * Each instance of this transport is single-threaded (TODO: check this is always followed)
  */
 public class JDBCTransport extends AbstractSimpleTransport {
 	InitialContext jndi;
-	Connection jdbcConn;
-	ApamaThread periodicCommitThread;
+	volatile Connection jdbcConn;
+	ApamaThread periodicCommitThread; // TODO: remove (after discussion); it's trivial to implement this in EPL so do that instead
 
+	/** A thread that's trying to connect (and if connection is ever closed, to reconnect) in the background. 
+	 * When thread terminates either we're connected, or we've starting shutting down the chain. 
+	 * Access this from a synchronized block. 
+	 * */
+	final ApamaThread connectThread = new ApamaThread(this+".ConnectionThread") {
+		
+		@Override
+		public void call() throws Exception {
+			// probably no need for this to be configurable but an undocumented system property gives us a way to if needed
+			final long sleepMillisBetweenConnectionAttempts = Long.getLong(getClass().getName()+".sleepMillisBetweenConnectionAttempts", 1500);
+
+			int retry = 0;
+			
+			while (!isCancelled())
+			{
+				synchronized(this) {
+					if (jdbcConn != null && !jdbcConn.isClosed()) { // Nothing to do
+						com.apama.util.concurrent.UncheckedUtils.wait(this, sleepMillisBetweenConnectionAttempts);
+						continue;
+					}
+				}
+				
+				
+				try 
+				{
+					Connection newConnection = createConnection();
+					try {
+						configureConnection(newConnection);
+					} catch (Exception ex) {
+						newConnection.close();
+						throw ex;
+					}
+					retry = 0;
+					synchronized(this) {
+						jdbcConn = newConnection;
+						this.notifyAll();
+					}
+				}
+				catch (Exception ex) {
+					if (retry++ == 0)
+						logger.error(getSQLExceptionMessage(ex, "Failed to connect to JDBC"), ex); // TODO: include some more details about the connection if possible?
+					else 
+						logger.warn(getSQLExceptionMessage(ex, "Failed to connect to JDBC (retry #"+retry+")")); // don't do stack trace subsequent times
+					
+				}
+			}
+		}
+	};
+
+	/** Access this from a synchronized(this) block. */
+	boolean isShuttingDownChain = false;
+	
 	final int batchSize = 500;
 	final String jdbcURL;
 	final String jdbcUser;
@@ -72,39 +128,61 @@ public class JDBCTransport extends AbstractSimpleTransport {
 
 	private Connection createConnection() throws Exception
 	{
+		logger.debug("Starting to establish connection");
 		// TODO: automatic retry connection establishment (unless shutting down)
-		Connection returnConn;
 		Properties sqlprops = new Properties();
 		//username and password properties may be different for different databases
-		if (jdbcUser != null){
+		if (jdbcUser != null) {
 			sqlprops.setProperty("user",jdbcUser);
 			sqlprops.setProperty("password", jdbcPassword);
 		}
-		if (jdbcURL != null) returnConn = DriverManager.getConnection(jdbcURL, sqlprops);
+		if (jdbcURL != null) return DriverManager.getConnection(jdbcURL, sqlprops);
 		
 		// Preferred/modern approach is to get a DataSource instance from JNDI, which allows for connection pooling
 		
 		// TODO: check if we need to set thread context classloader (see Kafka plugin and also itrac, can't remember if we do this automatically or not)
-		else {
-			if (jndi == null)
-				jndi = new InitialContext(jndiEnvironment);
+		if (jndi == null) {
+			logger.debug("Connecting to JNDI: "+jndiEnvironment);
+			jndi = new InitialContext(jndiEnvironment);
+		}
+		try {
 			DataSource ds = (DataSource)jndi.lookup(jndiName);
-			if (jdbcUser != null) {
-				returnConn = ds.getConnection(jdbcUser, jdbcPassword);
-			}else{
-				returnConn = ds.getConnection();
+
+			logger.debug("Getting connection '"+jndiName+"' from DataSource");
+
+			if (jdbcUser != null) return ds.getConnection(jdbcUser, jdbcPassword);
+			return ds.getConnection();
+		} catch (NamingException ex) {
+			// make sure we recreate it next time
+			tryElseWarn(jndi, x -> x.close(), "Could not close JNDI context: ");
+			jndi = null;
+			throw ex;
+		}
+	}
+	
+	private Connection configureConnection(Connection c) throws Exception
+	{
+		c.setAutoCommit(autoCommit);
+		logger.info("Connected to JDBC "+jdbcConn+" with autoCommit="+autoCommit);
+		return c;
+	}
+	
+	private Connection blockUntilValidConnection() throws SQLException
+	{
+		synchronized(this) {
+			while (true) {
+				if (jdbcConn != null && !jdbcConn.isClosed()) return jdbcConn;
+				if (isShuttingDownChain) throw new RuntimeException("Cannot reconnect because this chain is shutting down"); // TODO: decide how to handle this; maybe even a config option
+				UncheckedUtils.wait(this, 50*100); // wait until shutdown OR got connection
 			}
 		}
-		return returnConn;
 	}
 	
 	public void start() throws Exception {
-		jdbcConn = createConnection();
-		jdbcConn.setAutoCommit(autoCommit);
-		logger.info("Connected to JDBC "+jdbcConn+" with autoCommit="+autoCommit);
-		//make sure the connection is valid
-		boolean goodConn = jdbcConn.isValid(5); //will throw if this fails
+		// Connect in the background so we're ready for the first request (without making correlator/chain startup fail if DB is currently down - it might come up soon)
+		connectThread.startThread();
 
+		/*
 		if (periodicCommitIntervalSecs > 0)
 			periodicCommitThread = new ApamaThread("JDBCTransport.periodicCommitThread") {
 				@Override
@@ -119,7 +197,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 					}
 				}
 			}.startThread();
-
+		*/
 	}
 
 	public void deliverMessageTowardsTransport(Message m) throws Exception {
@@ -134,14 +212,14 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			executeStore(messageId, payload);
 		} else if (eventType.equals("SQLStatement")) {
 			executeStatement(payload, m, messageId, false, -1);
-		} else if (eventType.equals("SmallStatement")) {
+		} else if (eventType.equals("SmallStatement")) { // TODO: streamline this into executeStatement impl
 			boolean smallResultSet = true;
 			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
 			logger.info("Received execute SmallStatement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
 			payload = new MapExtractor((Map)m.getPayload(), "payload.statement");
 			executeStatement(payload, m, messageId, smallResultSet, maxSmallQuerySize);
 		} else {
-			throw new RuntimeException("Unsupported event type: "+eventType);
+			throw new RuntimeException("Unsupported event type for this transport: '"+eventType+"'");
 		}
 	}
 
@@ -168,8 +246,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	{
 		Map<String, Object> statementDonePayload = new HashMap<>();
 		statementDonePayload.put("messageId", messageId);
-		statementDonePayload.put("error", "");
-		statementDonePayload.put("updateCount", 0);
+		statementDonePayload.put("error", false);
 		Message statementDoneMsg = new Message(statementDonePayload);
 		statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.SQLStatementDone");
 
@@ -177,6 +254,8 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		Statement stmt = null;
 		ResultSet rs = null;
 		try {
+			Connection jdbcConn = blockUntilValidConnection();
+
 			smallResultSet = smallResultSet || payload.get("resultsInOneEvent", false); // TODO: if we use the new ExecuteStatement event (with maxRows) no need for smallResultSet/maxSmallQuerySize to be passed in separately 
 			
 			//TODO this works find for normal Statments - for Small statments sql and parameters are at the wrong level 
@@ -285,64 +364,66 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				hostSide.sendBatchTowardsHost(msgList);
 			}
 
-			// Respond with StatementDone
-			statementDonePayload.put("updateCount", stmt.getUpdateCount());
+			statementDonePayload.put("rows", stmt.getUpdateCount()+rowId); // usually update count or rowId will be 0 but adding them together is safest 
+			statementDonePayload.put("error", false);
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
+
 		} 
-		/*
-		catch (SQLTransientException e){
-			//if this is a transient exception then we should retry it to see if it will just worked
+		catch (Throwable ex) {
+			logger.warn("Failed to execute statement due to: "+ex+" - query is "+payload+": "); // TODO: remove later, but useful during dev
 			
-			//if currentRetryCount is 0 coming into this catch then uts the first times its failed
-			if (currentRetryCount == 0){ 
-				currentRetryCount = maxRetries;
-			}
-			else{
-				currentRetryCount = currentRetryCount - 1;
-			}
-
-			String sql_string = payload.getStringDisallowEmpty("sql"); 
-			List<Object> parameters = payload.getList("parameters", Object.class, false);
-			// If currentRetryCount is 0 at this stage then all retries have been exhausted
-			if (currentRetryCount > 0){
-				logger.warn("Statement execution failed with a transient error and will now be retried - " + sql_string + " (" + parameters +")" );
-				//TODO should we wait before retrying?
-				executeStatement(payload, m, messageId, currentRetryCount);
-			}
-			else{
-				logger.warn("Statement execution failed nd has been retried a maximum number of times - " + sql_string + " (" + parameters +")");
-				// Throw exception and send statementDone/uery Done - back to use with the failure
-			}
-			
-		}
-		catch (SQLNonTransientException e){
-			//If its a non transient exception then it wont 'just work' unless the cause is corrected
-		}*/
-		catch (SQLException ex) {
-			logger.warn("Failed to execute query due to: "+ex+" - query is "+payload+": "); // TODO: remove later, but useful during dev
-			String message = getSQLExceptionMessage(ex, "Error executing query");
-
-			statementDonePayload.put("error", message);
+			populateError(statementDonePayload, ex, payload);
+			// Whatever happens, send the statement done event so that listening EPL can terminate
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
 
-			throw new RuntimeException(message, ex);//, db.isDisconnected(con));
-		} catch (RuntimeException e)
+			if ((ex instanceof SQLRecoverableException || ex instanceof SQLTransientException))
+			{
+				logger.info("Closing and re-opening JDBC connection due to transient/recoverable error");
+				//jdbcConn.close();
+				// TODO: sleep backoff
+				// TODO: could auto-retry if not results returns and no rows changed (though may be simplest to leave it to the user's EPL to do that
+				// TODO: not if transport is shutting down
+			}
+
+			// don't need to throw here as we've already logged
+		}
+		finally 
 		{
-			// TODO: better error handling here too
-			statementDonePayload.put("error", e.toString());
-			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
-			logger.warn("Failed to execute query "+payload+": ", e);
-		}
-		finally {
-			// TODO: maybe this is the best place to put the sendBatchTowardsHost, to ensure it always gets sent
-			
 			tryElseWarn(rs,  x->x.close(), "Could not close ResultSet object for "+stmt+": ");
 			if (!(stmt instanceof PreparedStatement)) 
 				tryElseWarn(stmt, x -> x.close(), "Could not close statement object "+stmt+": ");
 		}
 	}
+	
+	private void populateError(Map<String,Object> statementDonePayload, Throwable ex, MapExtractor request)
+	{
+		Map<String,Object> details = new HashMap<String, Object>();
+		details.put("javaExceptionClass", ex.getClass().getName());
+		details.put("isTransientOrRecoverable", (ex instanceof SQLRecoverableException || ex instanceof SQLTransientException));
+
+		if (ex instanceof SQLException)
+		{
+			SQLException sql = (SQLException)ex;
+			String message = getSQLExceptionMessage(sql, "Error executing query");
+			details.put("message", message);
+	
+			details.put("sqlState", String.valueOf(sql.getSQLState())); // valueOf is to ensure we alays get a String not a null
+			details.put("vendorErrorCode", sql.getErrorCode());
+		} else {
+			details.put("message", ex.toString());
+		}
+		
+		// include the request statement which allows for implementing retry rules in EPL
+		// nb: this includes the original messageId, so users might
+		details.put("request", request.getUnderlyingMap());
+		
+		statementDonePayload.put("errorDetails", details);
+		statementDonePayload.put("error", true);
+	}
 
 	private void executeStore(long messageId, MapExtractor payload) throws SQLException {
+		Connection jdbcConn = blockUntilValidConnection();
+
 		String tableName = payload.getStringDisallowEmpty("tableName");
 		ResultSet tableSchema = jdbcConn.getMetaData().getColumns(null, null, tableName, null);
 
@@ -436,22 +517,26 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 
-	public static String getSQLExceptionMessage(SQLException ex, String errorPrefix)
+	public static String getSQLExceptionMessage(Throwable throwable, String errorPrefix)
 	{
-		String error = errorPrefix + "; ";
+		if (!(throwable instanceof SQLException)) return errorPrefix+": "+ExceptionUtil.getMessageFromException(throwable); // TODO: this is an internal API, so don't do this if forking for community purposes
+		SQLException ex = (SQLException)throwable;
+		
+		String error = errorPrefix + ": ";
 		try {
 			// Get the SQL state and error codes
 			String sqlState = ex.getSQLState ();
 			int errorCode = ex.getErrorCode();
-			if ((sqlState != null && sqlState.length() > 0) || errorCode > 0) {
-				error += "[" + sqlState + ":" + errorCode + "]";
-			}
 			// Append the error message or exception name
 			if (ex.getMessage() == null) {
 				error += ex.toString();
 			}
 			else {
 				error += ex.getMessage();
+			}
+
+			if ((sqlState != null && sqlState.length() > 0) || errorCode > 0) {
+				error += "["+ex.getClass().getSimpleName()+"/"+errorCode+"/" + sqlState+"] ";
 			}
 
 			// Add errors from any chained exceptions
@@ -568,6 +653,14 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	{
 		if (periodicCommitThread != null) 
 			ApamaThread.cancelAndJoin(5000, true,  periodicCommitThread);
+		
+		ApamaThread connectThread;
+		synchronized(this) {
+			isShuttingDownChain = true;
+			connectThread = this.connectThread;
+			this.notifyAll();
+		}
+		ApamaThread.cancelAndJoin(20*1000, true, connectThread);
 		
 		if (jdbcConn != null) {
 			if (periodicCommitThread != null && !autoCommit)

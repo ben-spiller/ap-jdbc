@@ -4,24 +4,25 @@ using com.apama.adbc.ResultSetRow;
 
 monitor Test {
 	action onload() {
-		send SQLStatement.simple("CREATE TABLE myTable(myColumn int);", new sequence<any>) to "JDBC";
+		send SQLStatement.simple("CREATE TABLE myTable(myColumn int, myString str);", new sequence<any>) to "JDBC";
 
-		send SQLStatement.simple("INSERT INTO myTable VALUES(?);", [any(integer, 100)]) to "JDBC";
+		send SQLStatement.simple("INSERT INTO myTable VALUES(?, ?);", [any(integer, 100), any(string, "Hello")]) to "JDBC";
 
-		send SQLStatement.commandBatch(["INSERT INTO myTable VALUES(200)"//,
+		send SQLStatement.commandBatch(["INSERT INTO myTable VALUES(200, \"Hi\")"//,
 		                            //    "INSERT INTO myTable VALUES(300)" // TODO: not working yet; maybe due to autoCommit?
 		]) to "JDBC";
 
-		send SQLStatement.parameterBatch("INSERT INTO myTable VALUES(?)", [
-		{1:any(integer, 1000)}, 
-		{1:any(integer, 2000)},
-		{1:any(integer, 3000)}
+		send SQLStatement.parameterBatch("INSERT INTO myTable VALUES(?, ?)", [
+			{1:any(integer, 1000), 2:any(string,"Hello world")}, 
+			{1:any(integer, 2000)},
+			{1:any(integer, 3000), 2:any(string,"Hello world 3")}
 		]) to "JDBC";
 
-		SQLStatement s := SQLStatement.simple("SELECT * FROM myTable WHERE myColumn > ?", [any(integer, -100)]);
-		send s to "JDBC";
-
-		on all ResultSetRow(messageId=s.messageId) as row {
+		// in a real query we'd also need to deal with quitting the listener when it finishes
+		on all ResultSetRow(messageId=
+		                    SQLStatement.simple("SELECT * FROM myTable WHERE myColumn > ?", [any(integer, -100)])
+		                    .sendTo("JDBC").messageId) as row 
+		{
 			log row.toString() at INFO;
 		}
 
