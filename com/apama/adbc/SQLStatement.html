@@ -46,7 +46,8 @@
 <FONT SIZE="-1">com.apama.adbc</FONT>
 <BR>Event SQLStatement</H2>
 <HR>Send this event to the JDBC connectivity plugin to execute a JDBC Statement (or PreparedStatement).<br>
-<br> This can be used for both queries and update commands.<DL>
+<br> This can be used for both queries and update commands.<br>
+<br> If autoCommit is not enabled for this JDBCTransport instance you need to request a commit using either #withCommit() method or by later sending a Commit event.<DL>
 <DT>
 <B>Sends:</B>
 </DT>
@@ -120,9 +121,14 @@
 <br>Execute a single SQL query or update command.</TD>
 </TR>
 <TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#withCommit()">withCommit</A></B>()</CODE>
+<br>
+<br>Performs a commit of this and any other statements executed (since the last commit) after this statement completes.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
 <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1"><CODE>&nbsp;<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A></CODE></FONT></TD><TD><CODE></CODE><CODE><B><A HREF="SQLStatement.html#withResultsInOneEvent()">withResultsInOneEvent</A></B>(integer&nbsp;maxRows)</CODE>
 <br>
-<br>Results all results in a single SmallResultsSet instead of one XXX event per row. It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended.</TD>
+<br>Delivers all results in a single SmallResultsSet events instead of one XXX event per row. It is mandatory to specify a maxRows value when using this to limit the size of this event, since large Apama events are not recommended.</TD>
 </TR>
 </TABLE>&nbsp;<A NAME="member_detail"></A>
 <TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
@@ -260,10 +266,14 @@
 </DD>
 </DL>
 <HR>
+<A NAME="withCommit()"></A>
+<H3>withCommit</H3>
+<PRE>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>withCommit</B>()</PRE>Performs a commit of this and any other statements executed (since the last commit) after this statement completes.<HR>
 <A NAME="withResultsInOneEvent()"></A>
 <H3>withResultsInOneEvent</H3>
 <PRE>
-<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>withResultsInOneEvent</B>(integer&nbsp;maxRows)</PRE>Results all results in a single SmallResultsSet instead of one XXX event per row. It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended.<DL>
+<A HREF="../../../com/apama/adbc/SQLStatement.html" title="type in com.apama.adbc">com.apama.adbc.SQLStatement</A>&nbsp;<B>withResultsInOneEvent</B>(integer&nbsp;maxRows)</PRE>Delivers all results in a single SmallResultsSet events instead of one XXX event per row. It is mandatory to specify a maxRows value when using this to limit the size of this event, since large Apama events are not recommended.<DL>
 <DT>
 <B>Parameters:</B>
 </DT>
