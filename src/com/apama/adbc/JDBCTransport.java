@@ -38,7 +38,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	final ApamaThread connectThread = new ApamaThread(this+".ConnectionThread") {
 		
 		@Override
-		public void call() throws Exception {
+		public void call() {
 			// probably no need for this to be configurable but an undocumented system property gives us a way to if needed
 			final long sleepMillisBetweenConnectionAttempts = Long.getLong(getClass().getName()+".sleepMillisBetweenConnectionAttempts", 1500);
 
@@ -47,7 +47,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			while (!isCancelled())
 			{
 				synchronized(this) {
-					if (jdbcConn != null && !jdbcConn.isClosed()) { // Nothing to do
+					if (jdbcConn != null && !isConnectionClosed(jdbcConn)) { // Nothing to do
 						com.apama.util.concurrent.UncheckedUtils.wait(this, sleepMillisBetweenConnectionAttempts);
 						continue;
 					}
@@ -163,7 +163,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 	private Connection configureConnection(Connection c) throws Exception
 	{
 		c.setAutoCommit(autoCommit);
-		logger.info("Connected to JDBC "+jdbcConn+" with autoCommit="+autoCommit);
+		logger.info("Connected to JDBC "+c+" with autoCommit="+autoCommit);
 		return c;
 	}
 	
@@ -208,24 +208,59 @@ public class JDBCTransport extends AbstractSimpleTransport {
 
 		// Unique id generic to all events from EPL, used in acknowledgements
 		long messageId = payload.get("messageId", -1L);
-		if (eventType.equals("Store")) {
-			executeStore(messageId, payload);
-		} else if (eventType.equals("SQLStatement")) {
-			executeStatement(payload, m, messageId, false, -1);
-		} else if (eventType.equals("SmallStatement")) { // TODO: streamline this into executeStatement impl
+		switch(eventType)
+		{
+		case "SQLStatement": 
+			executeStatement(payload, m, messageId, false, -1); 
+			break;
+		case "Store": 
+			executeStore(payload); 
+			break;
+		case "Commit": 
+			handleCommitRequest(payload); 
+			break;
+		case "SmallStatement":
+			// TODO: streamline this into executeStatement impl
 			boolean smallResultSet = true;
 			long maxSmallQuerySize = payload.get("maxSmallQuerySize", -1L);
 			logger.info("Received execute SmallStatement smallResultSet " + smallResultSet + " maxSmallQuerySize " + maxSmallQuerySize);
 			payload = new MapExtractor((Map)m.getPayload(), "payload.statement");
 			executeStatement(payload, m, messageId, smallResultSet, maxSmallQuerySize);
-		} else {
+			break;
+		default:
 			throw new RuntimeException("Unsupported event type for this transport: '"+eventType+"'");
 		}
 	}
 
+	private void handleCommitRequest(MapExtractor payload) 
+	{
+		logger.debug("Committing due to Commit event");
+
+		Map<String, Object> donePayload = new HashMap<>();
+		donePayload.put("messageId", payload.get("messageId", -1L));
+		Message statementDoneMsg = new Message(donePayload);
+		statementDoneMsg.putMetadataValue(Message.HOST_MESSAGE_TYPE, "com.apama.adbc.CommitDone");
+		
+		try {
+			Connection jdbcConn = blockUntilValidConnection();
+			jdbcConn.commit();
+		} 
+		catch (Throwable ex) {
+			logger.warn("Failed to commit due to: "+ex); // TODO: make this message nicer
+			
+			handleAndPopulateError(donePayload, ex, payload);
+
+			// don't need to throw here as we've already logged
+		} finally {
+			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
+		}
+
+	}
+	
 	
 	private Statement configureStatement(MapExtractor payload, Statement statement) throws SQLException
 	{
+		payload = payload.getMap("extraParams", true);
 		long maxRows = payload.get("maxRows", 0L);
 		if (maxRows > 0)
 		{
@@ -284,7 +319,6 @@ public class JDBCTransport extends AbstractSimpleTransport {
 				for(MapExtractor params : parameterBatches) {
 					for (Map.Entry<?,?> param: params.getUnderlyingMap().entrySet()) {
 						// TODO: "Not all databases allow for a non-typed Null to be sent to the backend. For maximum portability, the setNull or the setObject(int parameterIndex, Object x, int sqlType) method should be used instead of setObject(int parameterIndex, Object x)."
-						logger.info("setObject: "+(int)(long)(Long)param.getKey()+", "+param.getValue());
 						pstmt.setObject((int)(long)(Long)param.getKey(), param.getValue()); // TODO: does this work for all valid SQL types e.g. XML, blob, etc?
 					}
 					pstmt.execute();
@@ -363,7 +397,14 @@ public class JDBCTransport extends AbstractSimpleTransport {
 			else if (msgList.size() >0) {
 				hostSide.sendBatchTowardsHost(msgList);
 			}
-
+			
+			statementDonePayload.put("rows", rowId); // we've already sent these so make sure they're in the event even if there's then an error
+			if (payload.getMap("extraParams", true).get("commit", false))
+			{
+				logger.debug("Committing due to commit=true in statement");
+				jdbcConn.commit();
+			}
+			
 			statementDonePayload.put("rows", stmt.getUpdateCount()+rowId); // usually update count or rowId will be 0 but adding them together is safest 
 			statementDonePayload.put("error", false);
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
@@ -372,18 +413,14 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		catch (Throwable ex) {
 			logger.warn("Failed to execute statement due to: "+ex+" - query is "+payload+": "); // TODO: remove later, but useful during dev
 			
-			populateError(statementDonePayload, ex, payload);
+			handleAndPopulateError(statementDonePayload, ex, payload);
+
+			// If didn't close the connection, better rollback anything we started to do, else later commands won't work  
+			if (!isConnectionClosed(jdbcConn))
+				tryElseWarn(() -> jdbcConn.rollback(), "Failed to rollback changes");
+
 			// Whatever happens, send the statement done event so that listening EPL can terminate
 			hostSide.sendBatchTowardsHost(Collections.singletonList(statementDoneMsg));
-
-			if ((ex instanceof SQLRecoverableException || ex instanceof SQLTransientException))
-			{
-				logger.info("Closing and re-opening JDBC connection due to transient/recoverable error");
-				//jdbcConn.close();
-				// TODO: sleep backoff
-				// TODO: could auto-retry if not results returns and no rows changed (though may be simplest to leave it to the user's EPL to do that
-				// TODO: not if transport is shutting down
-			}
 
 			// don't need to throw here as we've already logged
 		}
@@ -395,11 +432,26 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		}
 	}
 	
-	private void populateError(Map<String,Object> statementDonePayload, Throwable ex, MapExtractor request)
+	static boolean isConnectionClosed(Connection c)
+	{
+		try {
+			return c.isClosed();
+		} catch (SQLException ex) {
+			return true;
+		}
+	}
+	
+	private void handleAndPopulateError(Map<String,Object> statementDonePayload, Throwable ex, MapExtractor request)
 	{
 		Map<String,Object> details = new HashMap<String, Object>();
 		details.put("javaExceptionClass", ex.getClass().getName());
 		details.put("isTransientOrRecoverable", (ex instanceof SQLRecoverableException || ex instanceof SQLTransientException));
+
+		if (!isConnectionClosed(jdbcConn) && (ex instanceof SQLRecoverableException || ex instanceof SQLTransientException))
+		{
+			logger.info("Closing and re-opening JDBC connection due to transient/recoverable error");
+			tryElseWarn(() -> jdbcConn.close(), "Could not close the JDBC connection after error: ");
+		}
 
 		if (ex instanceof SQLException)
 		{
@@ -421,7 +473,7 @@ public class JDBCTransport extends AbstractSimpleTransport {
 		statementDonePayload.put("error", true);
 	}
 
-	private void executeStore(long messageId, MapExtractor payload) throws SQLException {
+	private void executeStore(MapExtractor payload) throws SQLException {
 		Connection jdbcConn = blockUntilValidConnection();
 
 		String tableName = payload.getStringDisallowEmpty("tableName");

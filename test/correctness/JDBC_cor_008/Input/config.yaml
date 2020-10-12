@@ -1,0 +1,39 @@
+plugins:
+    JDBCTransport:
+        classpath: ${jdbc.connectivityPluginDir}/connectivity-jdbc.jar
+        class: com.apama.adbc.JDBCTransport
+    mapperCodec:
+        libraryName: MapperCodec
+        class: MapperCodec
+    diagnosticCodec:
+        libraryName: DiagnosticCodec
+        class: DiagnosticCodec
+
+startChains:
+    # Each JDBC chain provides a single JDBC connection, and so allows one statement to be executed at a time
+
+
+    # NB: this is the main chain used in the 2020Oct IW
+    JDBC:
+        - apama.eventMap:
+            allowMissing: true
+        - diagnosticCodec
+        - JDBCTransport:
+            autoCommit: true
+            jdbcURL: ${jdbc.url}
+            jdbcUser: ${jdbc.user}
+            jdbcPassword: ${jdbc.password}
+
+dynamicChains:
+    # Templates for chains that can be created/deleted at runtime by EPL
+
+    jdbc-dynamic:
+        - apama.eventMap:
+            allowMissing: true
+        - diagnosticCodec
+        - JDBCTransport:
+            autoCommit: "@{autoCommit}"
+            jdbcURL: ${jdbc.url}
+            jdbcUser: ${jdbc.user}
+            jdbcPassword: ${jdbc.password}
+            

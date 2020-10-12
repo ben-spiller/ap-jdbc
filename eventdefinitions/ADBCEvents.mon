@@ -11,6 +11,7 @@ package com.apama.adbc;
 //*****************************************************************************
 
 
+// TODO: rename messageId->requestId
 // TODO: document how people should generate unique IDs e.g. integer.incrementCounter("jdbc");
 
 /**
@@ -45,6 +46,9 @@ event Store {
 /** Send this event to the JDBC connectivity plugin to execute a JDBC Statement (or PreparedStatement).
 
 This can be used for both queries and update commands. 
+
+If autoCommit is not enabled for this JDBCTransport instance you need to request a commit using either #withCommit() method 
+or by later sending a Commit event. 
 */
 event SQLStatement 
 {
@@ -96,9 +100,13 @@ event SQLStatement
 	
 	// Methods for fluent builder API 
 	
-	/** Results all results in a single SmallResultsSet instead of one XXX event per row. 
-	It is mandatory to set maxRows when using this to limit the size of this event, since large Apama events are not recommended. */
+	/** Delivers all results in a single SmallResultsSet events instead of one XXX event per row. 
+	It is mandatory to specify a maxRows value when using this to limit the size of this event, since large Apama events are not recommended. */
 	action withResultsInOneEvent(integer maxRows) returns SQLStatement { extraParams["resultsInOneEvent"] := true; return setMaxRows(maxRows); }
+
+	/** Performs a commit of this and any other statements executed (since the last commit) after this statement completes. 
+	*/
+	action withCommit() returns SQLStatement { extraParams["commit"] := true; return self; }
 
 	action setMaxRows(integer v) returns SQLStatement { extraParams["maxRows"] := v; return self; }
 	action setQueryTimeoutSecs(integer v) returns SQLStatement { extraParams["queryTimeoutSecs"] := v; return self; }
@@ -171,7 +179,42 @@ event SQLStatementDone
 	integer rows;
 
 	/** True if there was a partial or complete failure (note that some results may have been returned/rows updates - see "rows" to find out). */
-	boolean error; 
+	boolean error; // this boolean exists only to allow hypertree matching 
+
+	/** Provides access to details such as the "message" and "isTransientOrRecoverable". 
+	Use an ifpresent statement to detect if there was an error and to extract the details. 
+	*/
+	optional<SQLErrorDetails> errorDetails;
+}
+
+/** Send this to the transport to explicitly commit any statements executed on this chain (=JDBC connection) since the last commit. 
+
+This cannot be used if the transport is using the JDBC autoCommit mode, which commits after every statement. 
+
+For example to periodically commit:
+
+<code>
+	on all wait(5.0) { send Commit(integer.incrementCounter("jdbc")) to "JDBC"; }
+</code>
+*/
+event Commit
+{
+	/** Unique id identifying the request. */
+	integer messageId;
+	
+	// TODO: if we want an action (not sure): static action sendTo(string channel) { ... } 
+}
+
+/** Sent in response to a Commit event when it has completed, successfully or unsuccessfully. 
+
+Not sent if a commit is made through some other mechanism. 
+
+Note that if there's an error it's written to the correlator log so there may be no need to listen for this event explicitly.  
+*/
+event CommitDone
+{
+	/** Unique id identifying the request. */
+	integer messageId;
 
 	/** Provides access to details such as the "message" and "isTransientOrRecoverable". 
 	Use an ifpresent statement to detect if there was an error and to extract the details. 

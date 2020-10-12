@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <apama-project>
 	<dependency>
-		<dependencyentry path="" kind="src" excluding="test/correctness/JDBC_cor_001/|test/correctness/JDBC_cor_003/|test/correctness/JDBC_cor_004/|test/correctness/JDBC_cor_005/|test/correctness/JDBC_cor_006/"/>
+		<dependencyentry path="" kind="src" excluding="test/correctness/JDBC_cor_001/|test/correctness/JDBC_cor_003/|test/correctness/JDBC_cor_004/|test/correctness/JDBC_cor_005/|test/correctness/JDBC_cor_006/|test/correctness/JDBC_cor_007/Input/test.mon"/>
 	</dependency>
 	<catalogs>
 		<catalog path="catalogs/Generated scenario blocks" type="block"/>
@@ -10,6 +10,19 @@
 	</catalogs>
 	<bundles>
 		<bundle file="JSONPlugin.bnd" origin-path="" origin="PRODUCT_CATALOG">
+			<instance name=""/>
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+			</evt-files>
+		</bundle>
+		<bundle file="ConnectivityPlugins-Common.bnd" origin-path="" origin="PRODUCT_CATALOG">
 			<instance name=""/>
 			<config-files>
 			</config-files>

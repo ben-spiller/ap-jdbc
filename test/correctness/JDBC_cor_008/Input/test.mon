@@ -1,0 +1,76 @@
+using com.apama.adbc.SQLStatement;
+using com.apama.adbc.SQLStatementDone;
+using com.apama.adbc.ResultSetRow;
+using com.softwareag.connectivity.ConnectivityPlugins;
+using com.softwareag.connectivity.Chain;
+
+monitor Test {
+	sequence<integer> ids := new sequence<integer>;
+
+	action onload() {
+
+		// Each chain is a single JDBC connection. If you configured your database to do connection pooling, 
+		// connections are returned to the pool (rather than destroyed) when the chainsdeleted. 
+		Chain c1 := ConnectivityPlugins.createDynamicChain("jdbc-auto-commit", ["jdbc-auto-commit"], "jdbc-dynamic", {"autoCommit":"true"}, "");
+		Chain c3 := ConnectivityPlugins.createDynamicChain("jdbc-periodic-commit", ["jdbc-periodic-commit"], "jdbc-dynamic", {"autoCommit":"false"}, "");
+		Chain c2 := ConnectivityPlugins.createDynamicChain("jdbc-manual-commit", ["jdbc-manual-commit"], "jdbc-dynamic", {"autoCommit":"false"}, "");
+
+		// Periodic committing is trivial to implement if needed (not sure if this is really something people need)
+		on all wait(5.0) { 
+			send com.apama.adbc.Commit(integer.incrementCounter("jdbc")) to "jdbc-periodic-commit";	
+			// Not much we can do if it fails (and it'll already be logged) so no need to listen for CommitDone()
+		}
+		
+		send SQLStatement.simple("CREATE TABLE myTable1(myColumn int, myString str)", new sequence<any>) to "jdbc-auto-commit";
+		send SQLStatement.simple("CREATE TABLE myTable2(myColumn int, myString str)", new sequence<any>) to "jdbc-periodic-commit";
+		send SQLStatement.simple("CREATE TABLE myTable3(myColumn int, myString str)", new sequence<any>) to "jdbc-manual-commit";
+
+		ids.append(SQLStatement.parameterBatch("INSERT INTO myTable1 VALUES(?, ?)", [
+			{1:any(integer, 123), 2:any(string,"Hello world 1")}, 
+			{2:any(string,"Hello world 2")},
+			{2:any(string,"Hello world 3")}
+		]).sendTo("jdbc-auto-commit").messageId);
+
+		ids.append(SQLStatement.parameterBatch("INSERT INTO myTable2 VALUES(?, ?)", [
+			{1:any(integer, 123), 2:any(string,"Hello world 1")}, 
+			{2:any(string,"Hello world 2")},
+			{2:any(string,"Hello world 3")}
+		]).sendTo("jdbc-periodic-commit").messageId);
+
+		ids.append(SQLStatement.parameterBatch("INSERT INTO myTable3 VALUES(?, ?)", [
+			{1:any(integer, 123), 2:any(string,"Hello world 1")}, 
+			{2:any(string,"Hello world 2")},
+			{2:any(string,"Hello world 3")}
+		]).withCommit()
+		           .sendTo("jdbc-manual-commit").messageId);
+
+		// not part of the sample, but makes this test work better:
+		com.apama.adbc.Commit commit := com.apama.adbc.Commit(integer.incrementCounter("jdbc"));
+		ids.append(commit.messageId);
+		send commit to "jdbc-periodic-commit";
+		
+		// TODO: finish this by waiting till all Done events for all ids have been received and then sending a query to check the results 
+		
+		/*
+		// in a real query we'd also need to deal with quitting the listener when it finishes
+		on all ResultSetRow(messageId=
+		                    SQLStatement.simple("SELECT * FROM myTable WHERE myColumn > ?", [any(integer, -100)])
+		                    .sendTo("JDBC").messageId) as row 
+		{
+			log row.toString() at INFO;
+		}
+		*/
+
+		integer id;
+		for id in ids {
+			on SQLStatementDone(messageId=id) as sd {
+				log "SQLStatement is done: "+sd.toString();
+			}
+		}
+		
+		on all com.apama.adbc.CommitDone() as cd {
+			log "Got CommitDone: "+cd.toString();
+		}
+	}
+}
+
